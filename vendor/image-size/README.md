@@ -10,5 +10,21 @@ It mitigates the infinite-loop denial-of-service issues reported as:
 
 The fork can be removed once Metro accepts an upstream `image-size` release
 that includes both fixes. The package version uses the unpublished local suffix
-`2.0.3-neolift.0` so security scanners can distinguish it from vulnerable
+`2.0.3-neolift.1` so security scanners can distinguish it from vulnerable
 upstream releases through `2.0.2`.
+
+## Packaging
+
+The application installs this fork from the versioned tarball at
+`vendor/image-size-2.0.3-neolift.1.tgz`. This avoids platform-dependent links
+created by npm for local directories and keeps clean EAS installations
+deterministic.
+
+After changing the fork, update its version and regenerate the tarball with:
+
+```sh
+npm run vendor:pack:image-size
+```
+
+Then run `npm install` to refresh `package-lock.json` and
+`npm run release:check` to verify Metro can load the installed package.

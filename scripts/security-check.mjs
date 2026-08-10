@@ -12,7 +12,7 @@ const imageSizePackage = require(
 const { imageSize } = require(imageSizeEntry);
 const imageUtils = require(path.join(path.dirname(imageSizeEntry), 'types', 'utils.js'));
 
-assert.equal(imageSizePackage.version, '2.0.3-neolift.0');
+assert.equal(imageSizePackage.version, '2.0.3-neolift.1');
 
 const malformedIcns = Uint8Array.from([
   0x69, 0x63, 0x6e, 0x73,

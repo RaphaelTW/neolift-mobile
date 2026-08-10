@@ -1,3 +1,4 @@
+80938aa5c2aab7c0938da2f8a52164c2dad80b4fdc485892a0f84e62018b3641  ./.editorconfig
 7d350c9e36fcf82dee45096c5f3e84bcf27cbeba5e6d8ac7350cd3041ac7cf12  ./.env.example
 217fcce185b4bae38d1ff9b7f4a41124f3e08955793df5e5d4a1c8d373efb8a3  ./.github/workflows/eas-build.yml
 5e35da8ade15b34833d5df3f7a113f0009d1a8a28ed1996dafa8bfa0821ddf7c  ./.github/workflows/quality.yml
@@ -35,8 +36,8 @@ fc445545d0705cd7609068a1aabe0b13d79e3e1d52b358d321a4282baac6aab8  ./docs/TRAININ
 43ca774e65a774047153831024020cc15243505f4ba539562e560caaa66e6653  ./docs/UPDATE_FLOW.md
 ed226a59640336552c0bd3a43c78e642e7908df60ee525211f38bb356f110d59  ./eas.json
 765656381274e3a7149efbd467013916f623651df1f28119cf1ba9eac01e93ab  ./LICENSE
-d739b496153c36312f64e3587aeda35c1c735e7a5a59235cd07cf0c42dcdf02d  ./package-lock.json
-02cabcc49a79817bc76cde2e77f0fa5e7875b1ed9ff6ff897daf37512e608e77  ./package.json
+fda361c9ec1f9d5711380a859d9a6131dd4964a0bbfcacb5b3553da40b5e28a2  ./package-lock.json
+1ce16b8628d78a3ca4b23db0590ce113954971544265414b8f92e38cca91d0fa  ./package.json
 bf291cd1d3fd74f6faf575ab4eceea5473ca790eeb50a1b64a205c02ac83297b  ./README.md
 a7ab8fa6797a05ae024bf15f0a8bef75643dc73b9e15fa98b4b6d425b1e5c3a7  ./RELEASE-v1.0.0.md
 57a75f88cb250b36e5703df2b4964041f70f2fd4c780533d7bd248e4a6d36c16  ./RELEASE-v1.1.0.md
@@ -44,8 +45,9 @@ be01174e4bca004b5264e109bd3ddd27c717ddea005eea03573fa90e36d5c518  ./RELEASE-v1.2
 06cb28ccf1104beb41c585316a4aae279f01a9cdc56ca328a6b3a9b37e6e3f8f  ./RELEASE-v1.3.0.md
 94261469e20f033c4e70b43bd6e86a858b230e5d1dd923976d61b8b4244011b2  ./RELEASE-v1.4.0.md
 155ce6544c9888a72a5180a913ad59346fc0f1759cf17b5072e7a05156f857ba  ./scripts/generate-manifest.mjs
+d4c9be9a361617da5e7c46f85d2bad6a457b8f93f63e52897bb08ad9ec7b32d3  ./scripts/metro-check.mjs
 e113965ba6c49b55f968abd45add4b9bd703db113dc7eed17c6b6bfdd3248b86  ./scripts/release-check.mjs
-d8c45544cf4ef853c0a591a319a547ae4749d55d872232e128f8049ea240d7a7  ./scripts/security-check.mjs
+e6c0695e9f0f54dfaf0cc700e20de7aa019989b5a8542beed7683218837edcc4  ./scripts/security-check.mjs
 96607ce98cfb198bd999240a5dceaa21143da125b2e7bc5e4d69e00f6667eec5  ./scripts/sync-exercises.mjs
 7449de4d4527e26004f675ab6498fba44672f7962f6efc6c0fb325585b2aaa7e  ./src/components/AnimatedBackground.tsx
 d20bc99d38a3bcd9a4172326eaad9efb79521fdafd8671eebfea0b74df04e717  ./src/components/BrandMark.tsx
@@ -70,6 +72,7 @@ e038f34be2dd10d0b3bc00f2e2b3f49322f5830455df04a6c1274f7da2f7c978  ./src/utils/fo
 c42fd16c58bf591d1a4fcf0043928c33a23f64266e11e682f21bbb0ab69b00ca  ./src/utils/muscles.ts
 c851930c8ea46cf4ce6f9931173e1c160493693b11fab66d7e0a72704e1656f1  ./THIRD_PARTY_NOTICES.md
 332770fb30ace0b5d13e856e988bb75752541172f1794bdbba61287fed5d6cb6  ./tsconfig.json
+0aa16184439b843d51d3464d50a7cba066ecf5fb239b233f814d1cd07d7eb914  ./vendor/image-size-2.0.3-neolift.1.tgz
 ff93a5aa4809114fb4588926811b02cdd6af45a53eda27507d95f2c15bc3cbc0  ./vendor/image-size/dist/detector.d.ts
 88706d9fb637f12e746bb21150904425264b902735ef778a1cf83714455bfec6  ./vendor/image-size/dist/detector.js
 02d84b5fe10c8ca1deae2ea0466c45fde75d31859b98e744376503592035085d  ./vendor/image-size/dist/index.d.ts
@@ -123,5 +126,5 @@ a11b63684aab0b86cb06c39e1f0cf31592a7f5510730696be7d79b2938d287e9  ./vendor/image
 7588855140169daa74ea5e3d6461bcc5ed144cfd04db890486987eeaec4fdc4a  ./vendor/image-size/dist/utils/bit-reader.d.ts
 0f126463a2171ad0c4ce4ec992427f98aa933b8e81928b2cd142872613628ff9  ./vendor/image-size/dist/utils/bit-reader.js
 3109783dad7527b490aabc49c3cb148573c19b41b843e70cf9388a93f3d7fccd  ./vendor/image-size/LICENSE
-68472ab07425d4ce18b07d04c0f51c755e9273de1d479462c5ae3b9b8dba90b9  ./vendor/image-size/package.json
-2ca3ae60a3b47d960da39fa9216448cd3a827fa1c24d188daa623bc72d24a9b7  ./vendor/image-size/README.md
+bede5921391bd30a1d18bd0ac5c39a4c0676d9ad1b2c581c7a6710105fec8a90  ./vendor/image-size/package.json
+7d6a118c3fef9093198743a0041c135ab7b06b4c22b396ef156397a2c396e38b  ./vendor/image-size/README.md
