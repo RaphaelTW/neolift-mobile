@@ -9,7 +9,7 @@
     <img src="https://img.shields.io/badge/Android-7%2B-3DDC84?logo=android" alt="Android 7+" />
     <img src="https://img.shields.io/badge/iOS-16.4%2B-111111?logo=apple" alt="iOS 16.4+" />
     <img src="https://img.shields.io/badge/storage-SQLite%20local-4F46E5" alt="SQLite local" />
-    <img src="https://img.shields.io/badge/version-v1.0.0-42D4FF" alt="Version" />
+    <img src="https://img.shields.io/badge/version-v1.1.0-42D4FF" alt="Version" />
   </p>
 
   <p>
@@ -17,7 +17,7 @@
     <a href="#-experiência">Experiência</a> ·
     <a href="#-arquitetura">Arquitetura</a> ·
     <a href="#-atualizações-pelo-github">Atualizações</a> ·
-    <a href="#-release-v100">Release</a>
+    <a href="#-release-v110">Release</a>
   </p>
 </div>
 
@@ -40,7 +40,7 @@ A direção visual mistura interface mobile contemporânea com referências Y2K/
 | Treino | sessão persistente, exercícios, séries, carga, repetições e conclusão por toque |
 | Evolução | gráfico por exercício, gráfico por músculo e painel de regiões do corpo |
 | Tema | automático, claro ou escuro com a mesma estrutura visual em Android/iOS |
-| Atualização | consulta a última GitHub Release e avisa dentro do app |
+| Atualização | GitHub Releases, download antecipado no Android e política automática 4+ |
 | Catálogo | seed offline + sincronização do catálogo completo do free-exercise-db |
 
 <details>
@@ -142,17 +142,25 @@ Não existe API própria para enviar histórico do usuário.
 
 ## ✦ Atualizações pelo GitHub
 
-Na inicialização, o app consulta a **última release** configurada em:
+Na inicialização, o app consulta as **releases estáveis** configuradas em:
 
 ```text
 EXPO_PUBLIC_GITHUB_OWNER=RaphaelTW
 EXPO_PUBLIC_GITHUB_REPO=neolift-mobile
 ```
 
-Quando existe versão maior que a instalada:
+O NeoLift conta quantas releases estáveis existem acima da versão instalada:
 
-- **Android standalone:** se a release possuir um `.apk`, o NeoLift pode baixar o arquivo e abrir o instalador do Android. A confirmação final continua sendo do usuário/sistema.
-- **iOS:** o app detecta a nova release, mas a instalação precisa passar por App Store, TestFlight ou canal autorizado pela Apple. A release do GitHub pode servir como fonte de versão/notas, não como instalador silencioso.
+| Defasagem | Android |
+|---|---|
+| 1–3 releases | baixa a versão mais recente e pergunta se o usuário deseja instalar agora |
+| 4+ releases | baixa automaticamente somente a última versão e abre o instalador do Android |
+
+Drafts e prereleases são ignorados. O APK já baixado é reaproveitado no armazenamento privado do app.
+
+> O Android continua aplicando as regras de segurança do sistema. Em distribuição por APK, o aparelho precisa permitir a fonte de instalação e, no fluxo usado pelo NeoLift, a tela nativa confirma a instalação. Todos os APKs de atualização precisam usar o **mesmo certificado/chave de assinatura** da versão instalada.
+
+- **iOS:** o app detecta a nova release, mas a instalação precisa passar por App Store, TestFlight ou outro canal autorizado pela Apple.
 
 Veja também [`docs/UPDATE_FLOW.md`](./docs/UPDATE_FLOW.md).
 
@@ -173,33 +181,31 @@ eas build -p android --profile production
 eas build -p ios --profile production
 ```
 
-## ✦ Release v1.0.0
+## ✦ Release v1.1.0
 
-Primeiro commit profissional:
+Commit profissional da nova versão:
 
 ```bash
-git add app.json package.json eas.json tsconfig.json expo-env.d.ts .gitignore .env.example README.md CHANGELOG.md RELEASE-v1.0.0.md LICENSE THIRD_PARTY_NOTICES.md app src assets scripts docs .github
-git commit -m "feat(neolift): lança app mobile offline-first de treinos" -m "Adiciona catálogo de exercícios, sessões persistentes em SQLite, evolução por exercício e grupo muscular, temas claro/escuro, integração com GitHub Releases e experiência unificada para Android e iOS."
-git branch -M main
-git remote add origin https://github.com/RaphaelTW/neolift-mobile.git
-git push -u origin main
+git add app.json package.json README.md CHANGELOG.md RELEASE-v1.1.0.md app src docs
+git commit -m "feat(updater): adiciona política inteligente de atualização Android" -m "Conta releases estáveis do GitHub, baixa antecipadamente o APK, solicita instalação quando há 1 a 3 versões novas e aplica o fluxo automático para a release mais recente quando o app está 4 ou mais releases atrasado."
+git push origin main
 ```
 
 Tag e release:
 
 ```bash
-git tag -a v1.0.0 -m "NeoLift v1.0.0 — Initial Mobile Release"
-git push origin v1.0.0
+git tag -a v1.1.0 -m "NeoLift v1.1.0 — Smart GitHub Updates"
+git push origin v1.1.0
 
-gh release create v1.0.0 \
-  --title "NeoLift v1.0.0 — Initial Mobile Release" \
-  --notes-file RELEASE-v1.0.0.md
+gh release create v1.1.0 \
+  --title "NeoLift v1.1.0 — Smart GitHub Updates" \
+  --notes-file RELEASE-v1.1.0.md
 ```
 
-Para o atualizador Android encontrar um instalador, anexe o APK à release:
+Depois do build Android, anexe o APK assinado com a mesma chave das versões anteriores:
 
 ```bash
-gh release upload v1.0.0 ./NeoLift-v1.0.0.apk --clobber
+gh release upload v1.1.0 ./NeoLift-v1.1.0.apk --clobber
 ```
 
 <details>
@@ -216,6 +222,12 @@ gh release upload v1.0.0 ./NeoLift-v1.0.0.apk --clobber
 - [ ] release do GitHub publicada
 - [ ] APK anexado se o canal Android direto for usado
 </details>
+
+## ✦ Pesquisa de API sem chave
+
+A v1.1.0 revisou a seção **Sports & Fitness** do `public-apis/public-apis`. A API específica de workout/exercícios listada ali é a **Wger**, porém o catálogo a marca como dependente de `apiKey`. As opções sem autenticação são voltadas principalmente a resultados esportivos, ligas, bicicletas e locais, não a um catálogo de musculação.
+
+Por isso o NeoLift continua com o `free-exercise-db` como fonte principal sem chave e com fallback offline. A análise está em [`docs/API_RESEARCH.md`](./docs/API_RESEARCH.md).
 
 ## ✦ Fonte dos exercícios
 

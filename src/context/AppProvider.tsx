@@ -1,5 +1,5 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Platform, useColorScheme } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import type { ActiveExercise, Exercise, MuscleProgress, ProgressPoint, ThemeMode, WeightUnit } from '@/types';
 import { dark, light, type AppColors } from '@/theme/colors';
@@ -26,7 +26,7 @@ import {
   updateSet as updateSetRepo
 } from '@/db/repository';
 import { ensureCatalog, syncCatalogFromGithub } from '@/services/exerciseCatalog';
-import { checkGithubRelease, type ReleaseInfo } from '@/services/githubUpdate';
+import { checkGithubRelease, downloadAndroidUpdate, installOrOpenRelease, type ReleaseInfo } from '@/services/githubUpdate';
 
 export type Dashboard = {
   sessions: number;
@@ -68,7 +68,11 @@ type AppContextValue = {
   refreshDashboard: () => Promise<void>;
   releaseInfo: ReleaseInfo | null;
   checkingUpdate: boolean;
+  downloadingUpdate: boolean;
+  downloadedUpdateUri: string | null;
   checkUpdates: () => Promise<ReleaseInfo | null>;
+  downloadUpdate: () => Promise<string | null>;
+  installUpdate: () => Promise<void>;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -88,6 +92,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [activeExercises, setActiveExercises] = useState<ActiveExercise[]>([]);
   const [releaseInfo, setReleaseInfo] = useState<ReleaseInfo | null>(null);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [downloadingUpdate, setDownloadingUpdate] = useState(false);
+  const [downloadedUpdateUri, setDownloadedUpdateUri] = useState<string | null>(null);
+  const promptedUpdateRef = useRef<string | null>(null);
 
   const isDark = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
   const colors = isDark ? dark : light;
@@ -97,6 +104,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const info = await checkGithubRelease();
       setReleaseInfo(info);
+      if (!info.hasUpdate) setDownloadedUpdateUri(null);
       return info;
     } catch {
       return null;
@@ -104,6 +112,61 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setCheckingUpdate(false);
     }
   }, []);
+
+  const prepareUpdate = useCallback(async (info: ReleaseInfo) => {
+    if (Platform.OS !== 'android' || !info.apkUrl) return null;
+    setDownloadingUpdate(true);
+    try {
+      const uri = await downloadAndroidUpdate(info);
+      setDownloadedUpdateUri(uri);
+      return uri;
+    } finally {
+      setDownloadingUpdate(false);
+    }
+  }, []);
+
+  const downloadUpdate = useCallback(async () => {
+    if (!releaseInfo?.hasUpdate) return null;
+    return prepareUpdate(releaseInfo);
+  }, [prepareUpdate, releaseInfo]);
+
+  const installUpdate = useCallback(async () => {
+    if (!releaseInfo?.hasUpdate) return;
+    const uri = downloadedUpdateUri || await prepareUpdate(releaseInfo);
+    await installOrOpenRelease(releaseInfo, uri || undefined);
+  }, [downloadedUpdateUri, prepareUpdate, releaseInfo]);
+
+  const handleStartupUpdate = useCallback(async (info: ReleaseInfo) => {
+    if (Platform.OS !== 'android' || !info.hasUpdate || !info.apkUrl) return;
+    if (promptedUpdateRef.current === info.latestVersion) return;
+    promptedUpdateRef.current = info.latestVersion;
+
+    try {
+      const uri = await prepareUpdate(info);
+      if (!uri) return;
+
+      if (info.updateMode === 'forced') {
+        await installOrOpenRelease(info, uri);
+        return;
+      }
+
+      Alert.alert(
+        'Atualização pronta',
+        `NeoLift v${info.latestVersion} foi baixado. Você está ${info.newerReleaseCount} release${info.newerReleaseCount === 1 ? '' : 's'} atrás. Deseja atualizar agora?`,
+        [
+          { text: 'Depois', style: 'cancel' },
+          {
+            text: 'Atualizar agora',
+            onPress: () => installOrOpenRelease(info, uri).catch(() => {
+              Alert.alert('Atualização', 'Não foi possível abrir o instalador do Android. Verifique a permissão para instalar apps desta fonte.');
+            })
+          }
+        ]
+      );
+    } catch {
+      // Falhas de rede não impedem o uso offline do app.
+    }
+  }, [prepareUpdate]);
 
   const refreshDashboard = useCallback(async () => {
     const [stats, items] = await Promise.all([dashboardStats(db), recentWorkouts(db)]);
@@ -130,12 +193,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setCatalogCount(await countExercises(db));
       await Promise.all([refreshDashboard(), refreshProgress(), refreshActive()]);
       setReady(true);
-      checkUpdates().catch(() => {});
+      checkUpdates().then((info) => {
+        if (info) handleStartupUpdate(info).catch(() => {});
+      }).catch(() => {});
       if ((await countExercises(db)) < 500) {
         syncCatalogFromGithub(db).then(setCatalogCount).catch(() => {});
       }
     })().catch(console.error);
-  }, [db, refreshActive, refreshDashboard, refreshProgress, checkUpdates]);
+  }, [db, refreshActive, refreshDashboard, refreshProgress, checkUpdates, handleStartupUpdate]);
 
   const setThemeMode = useCallback(async (mode: ThemeMode) => {
     setThemeState(mode);
@@ -216,13 +281,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setThemeMode, setWeightUnit, findExercises, findExercise, favorite, toggleFavorite,
     syncCatalog, startWorkout, addExercise, addSet, updateSet, removeExercise, finishWorkout,
     refreshActive, refreshProgress, getMuscleHistory, getExerciseHistory, refreshDashboard,
-    releaseInfo, checkingUpdate, checkUpdates
+    releaseInfo, checkingUpdate, downloadingUpdate, downloadedUpdateUri, checkUpdates, downloadUpdate, installUpdate
   }), [
     colors, isDark, themeMode, weightUnit, ready, catalogCount, syncingCatalog, dashboard, recent,
     muscles, activeWorkoutId, activeExercises, setThemeMode, setWeightUnit, findExercises, findExercise,
     favorite, toggleFavorite, syncCatalog, startWorkout, addExercise, addSet, updateSet, removeExercise,
     finishWorkout, refreshActive, refreshProgress, getMuscleHistory, getExerciseHistory, refreshDashboard,
-    releaseInfo, checkingUpdate, checkUpdates
+    releaseInfo, checkingUpdate, downloadingUpdate, downloadedUpdateUri, checkUpdates, downloadUpdate, installUpdate
   ]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

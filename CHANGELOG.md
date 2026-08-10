@@ -2,6 +2,24 @@
 
 Todas as mudanças relevantes do NeoLift serão registradas aqui.
 
+## [1.1.0] - 2026-08-07
+
+### Added
+- Contagem de releases estáveis mais novas usando a API pública do GitHub.
+- Download antecipado do APK mais recente no Android.
+- Estado de atualização e defasagem exibidos em Configurações.
+- Política de atualização 4+: baixa diretamente a última release e abre o instalador.
+- Documentação `docs/API_RESEARCH.md` sobre APIs gratuitas de treino sem chave.
+
+### Changed
+- Atualizador passou de `releases/latest` para listagem das releases estáveis, permitindo saber quantas versões o aparelho está atrasado.
+- APK é preservado em armazenamento privado do aplicativo e reaproveitado quando já foi baixado.
+- Catálogo principal permanece `free-exercise-db`, sem API key e com funcionamento offline.
+
+### Security / Platform
+- O fluxo respeita a segurança do Android: a confirmação nativa de instalação continua obrigatória para apps comuns.
+- Drafts e prereleases são ignorados pelo atualizador automático.
+
 ## [1.0.0] - 2026-08-06
 
 ### Added
