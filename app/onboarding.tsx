@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
@@ -8,6 +8,7 @@ import { Button, Card, Chip, Eyebrow, Text } from '@/components/Ui';
 import { useApp } from '@/context/AppProvider';
 import type { ExperienceLevel, FitnessGoal, Gender } from '@/types';
 import { profileLabels } from '@/services/trainingPlan';
+import { showNeoDialog } from '@/services/dialog';
 
 const numberValue = (value: string) => Number(value.replace(',', '.')) || 0;
 
@@ -24,15 +25,15 @@ export default function OnboardingScreen() {
   const finish = async () => {
     const ageNumber = Math.round(numberValue(age));
     const weightNumber = numberValue(weight);
-    if (ageNumber < 13 || ageNumber > 100) return Alert.alert('Idade', 'Informe uma idade entre 13 e 100 anos.');
-    if (weightNumber <= (weightUnit === 'kg' ? 20 : 44) || weightNumber > (weightUnit === 'kg' ? 400 : 880)) return Alert.alert('Peso', `Informe um peso válido em ${weightUnit}.`);
+    if (ageNumber < 13 || ageNumber > 100) { showNeoDialog({ title: 'Idade inválida', message: 'Informe uma idade entre 13 e 100 anos.', icon: 'calendar-outline' }); return; }
+    if (weightNumber <= (weightUnit === 'kg' ? 20 : 44) || weightNumber > (weightUnit === 'kg' ? 400 : 880)) { showNeoDialog({ title: 'Peso inválido', message: `Informe um peso válido em ${weightUnit}.`, icon: 'scale-outline' }); return; }
 
     setSaving(true);
     try {
       await saveProfile({ gender, age: ageNumber, experience, goal, trainingDays, onboardingCompleted: true });
       await recordMeasurement({ weight: weightNumber, neck: null, chest: null, waist: null, hips: null, leftArm: null, rightArm: null, leftThigh: null, rightThigh: null, leftCalf: null, rightCalf: null });
       if (ageNumber < 18) {
-        Alert.alert('Perfil criado', 'Para menores de 18 anos, o NeoLift mantém sugestões conservadoras. Supervisão de um profissional qualificado é recomendada.');
+        showNeoDialog({ title: 'Perfil criado', message: 'Para menores de 18 anos, o NeoLift mantém sugestões conservadoras. Supervisão de um profissional qualificado é recomendada.', icon: 'shield-checkmark-outline' });
       }
       router.replace('/(tabs)');
     } finally {

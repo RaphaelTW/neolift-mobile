@@ -2,6 +2,27 @@
 
 Todas as mudanças relevantes do NeoLift serão registradas aqui.
 
+## [1.4.0] - 2026-08-10
+
+### Added
+- Exercise Coach com escolha entre demonstração 3D offline e exemplo em vídeo online.
+- Avatar humano 3D procedural reutilizável renderizado com React Three Fiber + Expo GL.
+- Classificador biomecânico que dá cobertura 3D a todo o catálogo local, distribuindo exercícios por famílias de movimento.
+- Controles 3D de pausa, velocidade e câmera frontal, lateral ou 3/4.
+- Vídeo online contextual sem API key: abre busca específica do exercício no navegador integrado do sistema.
+- Detecção de conexão; quando offline, o app oferece imediatamente a demonstração 3D.
+- Sistema próprio de diálogos NeoLift com fundo fosco, superfícies do tema e ações roxas.
+
+### Changed
+- Todos os `Alert.alert` do aplicativo foram substituídos por diálogos com a identidade visual NeoLift.
+- Tela de exercício ganhou ação principal “Como fazer”.
+- Cada exercício da sessão ativa ganhou acesso direto ao Exercise Coach.
+- Android `versionCode` e iOS `buildNumber` incrementados para 5.
+
+### Notes
+- O avatar 3D representa a família biomecânica do exercício e não substitui orientação individual de um profissional.
+- Instruções específicas do `free-exercise-db` continuam exibidas junto da demonstração para detalhes de pegada, máquina e posicionamento.
+
 ## [1.3.0] - 2026-08-10
 
 ### Added

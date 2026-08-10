@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
@@ -7,6 +7,7 @@ import { Button, Card, Eyebrow, SectionTitle, Text } from '@/components/Ui';
 import { useApp } from '@/context/AppProvider';
 import { buildMonthlyTrainingPlan, profileLabels } from '@/services/trainingPlan';
 import type { PlanDay } from '@/types';
+import { showNeoDialog } from '@/services/dialog';
 
 export default function WorkoutScreen() {
   const { colors, profile, ready, activeWorkoutId, activeWorkoutName, activeExercises, startWorkout, startPlannedWorkout } = useApp();
@@ -18,10 +19,8 @@ export default function WorkoutScreen() {
   const openFree = async () => { await startWorkout(); router.push('/workout/session'); };
   const startDay = async (day: PlanDay) => {
     if (activeWorkoutId) {
-      return Alert.alert('Treino já em andamento', `Você já está fazendo “${activeWorkoutName}”. Conclua ou continue antes de iniciar outro plano.`, [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Continuar', onPress: () => router.push('/workout/session') }
-      ]);
+      showNeoDialog({ title: 'Treino já em andamento', message: `Você já está fazendo “${activeWorkoutName}”. Conclua ou continue antes de iniciar outro plano.`, icon: 'barbell-outline', actions: [{ label: 'Cancelar', style: 'cancel' }, { label: 'Continuar treino', style: 'accent', onPress: () => router.push('/workout/session') }] });
+      return;
     }
     await startPlannedWorkout(day);
     router.push('/workout/session');

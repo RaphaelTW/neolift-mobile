@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Platform, useColorScheme } from 'react-native';
+import { Platform, useColorScheme } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import type {
   ActiveExercise, BodyMeasurement, BodyMeasurementInput, EffortRating, Exercise, LoadSuggestion,
@@ -40,6 +40,7 @@ import {
 } from '@/db/repository';
 import { ensureCatalog, syncCatalogFromGithub } from '@/services/exerciseCatalog';
 import { checkGithubRelease, downloadAndroidUpdate, installOrOpenRelease, type ReleaseInfo } from '@/services/githubUpdate';
+import { showNeoDialog } from '@/services/dialog';
 
 export type Dashboard = {
   sessions: number;
@@ -176,16 +177,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         await installOrOpenRelease(info, uri);
         return;
       }
-      Alert.alert(
-        'Atualização pronta',
-        `NeoLift v${info.latestVersion} foi baixado. Você está ${info.newerReleaseCount} release${info.newerReleaseCount === 1 ? '' : 's'} atrás. Deseja atualizar agora?`,
-        [
-          { text: 'Depois', style: 'cancel' },
-          { text: 'Atualizar agora', onPress: () => installOrOpenRelease(info, uri).catch(() => {
-            Alert.alert('Atualização', 'Não foi possível abrir o instalador do Android. Verifique a permissão para instalar apps desta fonte.');
-          }) }
+      showNeoDialog({
+        title: 'Atualização pronta',
+        message: `NeoLift v${info.latestVersion} foi baixado. Você está ${info.newerReleaseCount} release${info.newerReleaseCount === 1 ? '' : 's'} atrás. Deseja atualizar agora?`,
+        icon: 'cloud-download-outline',
+        actions: [
+          { label: 'Depois', style: 'cancel' },
+          { label: 'Atualizar agora', style: 'accent', onPress: async () => {
+            try {
+              await installOrOpenRelease(info, uri);
+            } catch {
+              showNeoDialog({ title: 'Atualização', message: 'Não foi possível abrir o instalador do Android. Verifique a permissão para instalar apps desta fonte.', icon: 'warning-outline' });
+            }
+          } }
         ]
-      );
+      });
     } catch {
       // Falhas de rede não impedem o uso offline do app.
     }

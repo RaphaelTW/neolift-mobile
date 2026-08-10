@@ -10,7 +10,7 @@
     <img src="https://img.shields.io/badge/Expo-SDK%2057-111111?logo=expo" alt="Expo SDK 57" />
     <img src="https://img.shields.io/badge/React%20Native-0.86-7C3AED?logo=react" alt="React Native" />
     <img src="https://img.shields.io/badge/SQLite-local-9D5CFF" alt="SQLite" />
-    <img src="https://img.shields.io/badge/version-v1.3.0-A855F7" alt="v1.3.0" />
+    <img src="https://img.shields.io/badge/version-v1.4.0-A855F7" alt="v1.4.0" />
   </p>
 </div>
 
@@ -18,7 +18,7 @@
 
 Aplicativo React Native + Expo para Android e iOS. O catálogo usa o `free-exercise-db`; perfil, treinos, medidas, séries, cargas, progresso e preferências ficam no SQLite do aparelho.
 
-A v1.3.0 adota uma identidade roxa, tema claro realmente claro e tema escuro preto fosco, além de animações ambientes discretas.
+A v1.4.0 mantém a identidade roxa, o tema claro e o preto fosco e adiciona o **Exercise Coach**: demonstração 3D offline para todo o catálogo, vídeo online contextual e diálogos totalmente integrados ao visual NeoLift.
 
 <details>
 <summary><strong>O que existe nesta versão</strong></summary>
@@ -34,9 +34,31 @@ A v1.3.0 adota uma identidade roxa, tema claro realmente claro e tema escuro pre
 - gráficos por exercício e grupo muscular;
 - peso e medidas corporais por data;
 - temas Sistema, Claro e Escuro;
-- GitHub Releases + política Android de atualização 4+.
+- GitHub Releases + política Android de atualização 4+;
+- Exercise Coach com escolha 3D offline ou vídeo online;
+- avatar 3D procedural com pausa, velocidade e três ângulos de câmera;
+- alertas/confirmacões com o mesmo visual do app.
 
 </details>
+
+
+## Exercise Coach 3D
+
+Ao tocar em **Como fazer**, o NeoLift pergunta se o usuário quer **ver em 3D** ou **ver em vídeo**.
+
+```text
+Como quer ver o exercício?
+
+[ Ver exemplo em 3D ]
+[ Ver exemplo em vídeo ]
+[ Agora não ]
+```
+
+O 3D é renderizado no aparelho e funciona offline. Em vez de empacotar centenas de arquivos pesados, um avatar procedural é animado por famílias biomecânicas, cobrindo todo o catálogo inclusive exercícios adicionados no futuro por meio de um fallback genérico.
+
+O vídeo usa internet e abre uma busca contextual pelo nome do exercício no navegador integrado. Não exige API key. Se a pessoa estiver offline, o NeoLift exibe um diálogo temático oferecendo imediatamente o modo 3D.
+
+Detalhes em [`docs/EXERCISE_COACH.md`](docs/EXERCISE_COACH.md) e a validação de cobertura em [`docs/COACH_COVERAGE.md`](docs/COACH_COVERAGE.md).
 
 ## Motor de recomendação
 
@@ -130,23 +152,23 @@ eas build -p android --profile preview
 
 O perfil `preview` em `eas.json` usa `buildType: apk`.
 
-## Publicar v1.3.0
+## Publicar v1.4.0
 
 ```bash
 git add .
-git commit -m "feat(training): adiciona plano adaptativo e evolução corporal" -m "Cria onboarding físico, planejamento semanal e mensal, sugestão opcional de carga pelo histórico, medidas corporais, histórico detalhado, nova identidade roxa e animações de fundo."
+git commit -m "feat(coach): adiciona demonstrações 3D e vídeos de execução" -m "Cria Exercise Coach com avatar 3D offline para todo o catálogo, escolha entre 3D e vídeo online e substitui alertas nativos por diálogos com a identidade visual NeoLift."
 git push origin main
 
-git tag -a v1.3.0 -m "NeoLift v1.3.0 — Adaptive Training"
-git push origin v1.3.0
+git tag -a v1.4.0 -m "NeoLift v1.4.0 — Exercise Coach 3D"
+git push origin v1.4.0
 
-gh release create v1.3.0 --title "NeoLift v1.3.0 — Adaptive Training" --notes-file RELEASE-v1.3.0.md
+gh release create v1.4.0 --title "NeoLift v1.4.0 — Exercise Coach 3D" --notes-file RELEASE-v1.4.0.md
 ```
 
-Depois do EAS Build, baixe o APK, renomeie para `NeoLift-v1.3.0.apk` e anexe:
+Depois do EAS Build, baixe o APK, renomeie para `NeoLift-v1.4.0.apk` e anexe:
 
 ```bash
-gh release upload v1.3.0 ./NeoLift-v1.3.0.apk --clobber
+gh release upload v1.4.0 ./NeoLift-v1.4.0.apk --clobber
 ```
 
 ## Atualização Android
@@ -174,4 +196,4 @@ npm run sync:exercises
 
 ## Versão
 
-**NeoLift v1.3.0 — Adaptive Training**
+**NeoLift v1.4.0 — Exercise Coach 3D**

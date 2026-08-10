@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { Button, Card, Eyebrow, Text } from '@/components/Ui';
 import { useApp } from '@/context/AppProvider';
+import { showNeoDialog } from '@/services/dialog';
 
 const parse = (v: string) => v.trim() ? Number(v.replace(',', '.')) || null : null;
 
@@ -21,11 +22,11 @@ export default function MeasurementsScreen() {
 
   const save = async () => {
     const w = Number(weight.replace(',', '.')) || 0;
-    if (w <= (weightUnit === 'kg' ? 20 : 44) || w > (weightUnit === 'kg' ? 400 : 880)) return Alert.alert('Peso', `Informe seu peso atual em ${weightUnit}.`);
+    if (w <= (weightUnit === 'kg' ? 20 : 44) || w > (weightUnit === 'kg' ? 400 : 880)) { showNeoDialog({ title: 'Peso inválido', message: `Informe seu peso atual em ${weightUnit}.`, icon: 'scale-outline' }); return; }
     setSaving(true);
     try {
       await recordMeasurement({ weight: w, neck: parse(values.neck), chest: parse(values.chest), waist: parse(values.waist), hips: parse(values.hips), leftArm: parse(values.leftArm), rightArm: parse(values.rightArm), leftThigh: parse(values.leftThigh), rightThigh: parse(values.rightThigh), leftCalf: parse(values.leftCalf), rightCalf: parse(values.rightCalf) });
-      Alert.alert('Medidas registradas', 'O novo ponto já aparece na evolução corporal.', [{ text: 'OK', onPress: () => router.back() }]);
+      showNeoDialog({ title: 'Medidas registradas', message: 'O novo ponto já aparece na evolução corporal.', icon: 'checkmark-circle-outline', actions: [{ label: 'OK', style: 'accent', onPress: () => router.back() }] });
     } finally { setSaving(false); }
   };
 

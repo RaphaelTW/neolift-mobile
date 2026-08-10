@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import { AppProvider, useApp } from '@/context/AppProvider';
+import { NeoDialogHost } from '@/components/NeoDialog';
 import { migrateDb } from '@/db/schema';
 
 function Navigation() {
@@ -11,6 +12,7 @@ function Navigation() {
     <Stack.Screen name="(tabs)" />
     <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
     <Stack.Screen name="exercise/[id]" />
+    <Stack.Screen name="exercise/coach/[id]" />
     <Stack.Screen name="workout/session" />
     <Stack.Screen name="workout/history" />
     <Stack.Screen name="profile/edit" />
@@ -19,5 +21,5 @@ function Navigation() {
 }
 
 export default function RootLayout() {
-  return <SQLiteProvider databaseName="neolift.db" onInit={migrateDb}><AppProvider><Navigation /></AppProvider></SQLiteProvider>;
+  return <SQLiteProvider databaseName="neolift.db" onInit={migrateDb}><AppProvider><Navigation /><NeoDialogHost /></AppProvider></SQLiteProvider>;
 }

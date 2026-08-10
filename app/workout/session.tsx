@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,8 @@ import { useApp } from '@/context/AppProvider';
 import type { ActiveExercise, EffortRating, Exercise, LoadSuggestion, WorkoutSet } from '@/types';
 import { muscleLabel } from '@/utils/muscles';
 import { compactNumber } from '@/utils/format';
+import { chooseExerciseDemo } from '@/services/exerciseCoach';
+import { showNeoDialog } from '@/services/dialog';
 
 function SetRow({ set, unit, onSave }: { set: WorkoutSet; unit: string; onSave: (reps: number, weight: number, completed: boolean) => Promise<void> }) {
   const { colors } = useApp();
@@ -30,7 +32,7 @@ function SetRow({ set, unit, onSave }: { set: WorkoutSet; unit: string; onSave: 
 }
 
 function ExerciseBlock({ item }: { item: ActiveExercise }) {
-  const { colors, weightUnit, addSet, updateSet, removeExercise, setEffort, getLoadSuggestion } = useApp();
+  const { colors, weightUnit, addSet, updateSet, removeExercise, setEffort, getLoadSuggestion, findExercise } = useApp();
   const [suggestion, setSuggestion] = useState<LoadSuggestion | null>(null);
   useEffect(() => { getLoadSuggestion(item.exerciseId).then(setSuggestion); }, [item.exerciseId, getLoadSuggestion]);
   const completed = item.sets.some(set => set.completed);
@@ -45,7 +47,9 @@ function ExerciseBlock({ item }: { item: ActiveExercise }) {
   };
 
   return <Card style={{ marginTop: 12 }}>
-    <View style={styles.exerciseHeader}><View style={{ flex: 1 }}><Text style={{ fontSize: 17, fontWeight: '900' }}>{item.exerciseName}</Text><Text style={{ color: colors.accent, fontSize: 11, fontWeight: '800', marginTop: 3 }}>{muscleLabel(item.primaryMuscle).toUpperCase()}</Text></View><Pressable onPress={() => Alert.alert('Remover exercício?', item.exerciseName, [{ text: 'Cancelar', style: 'cancel' }, { text: 'Remover', style: 'destructive', onPress: () => removeExercise(item.id) }])}><Ionicons name="trash-outline" size={20} color={colors.muted} /></Pressable></View>
+    <View style={styles.exerciseHeader}><View style={{ flex: 1 }}><Text style={{ fontSize: 17, fontWeight: '900' }}>{item.exerciseName}</Text><Text style={{ color: colors.accent, fontSize: 11, fontWeight: '800', marginTop: 3 }}>{muscleLabel(item.primaryMuscle).toUpperCase()}</Text></View><Pressable onPress={() => showNeoDialog({ title: 'Remover exercício?', message: item.exerciseName, icon: 'trash-outline', actions: [{ label: 'Cancelar', style: 'cancel' }, { label: 'Remover', style: 'danger', onPress: () => removeExercise(item.id) }] })}><Ionicons name="trash-outline" size={20} color={colors.muted} /></Pressable></View>
+
+    <Pressable onPress={async () => { const exercise = await findExercise(item.exerciseId); if (exercise) chooseExerciseDemo(exercise, () => router.push(`/exercise/coach/${exercise.id}`)); }} style={[styles.coachButton, { borderColor: colors.accent, backgroundColor: colors.accentSoft }]}><Ionicons name="body-outline" size={18} color={colors.accent} /><Text style={{ color: colors.accent, fontWeight: '900', fontSize: 12 }}>COMO FAZER</Text><Ionicons name="chevron-forward" size={16} color={colors.accent} /></Pressable>
 
     {suggestion ? <View style={[styles.suggestion,{ backgroundColor: colors.accentSoft, borderColor: colors.accent }]}>
       <Ionicons name="sparkles" size={19} color={colors.accent} />
@@ -70,9 +74,9 @@ export default function SessionScreen() {
   useFocusEffect(useCallback(() => { refreshActive(); }, [refreshActive]));
   useEffect(() => { if (!pickerOpen) return; const t = setTimeout(() => findExercises(query, 'all', 50).then(setResults), 100); return () => clearTimeout(t); }, [pickerOpen, query, findExercises]);
   const complete = async () => {
-    if (activeExercises.length === 0) return Alert.alert('Treino vazio', 'Adicione pelo menos um exercício antes de concluir.');
+    if (activeExercises.length === 0) { showNeoDialog({ title: 'Treino vazio', message: 'Adicione pelo menos um exercício antes de concluir.', icon: 'barbell-outline' }); return; }
     const missingEffort = activeExercises.some(item => item.sets.some(set => set.completed) && !item.effort);
-    Alert.alert('Concluir treino?', missingEffort ? 'Você pode concluir agora. Para melhorar as sugestões de carga, marque “Sobrou”, “Ideal” ou “Pesou” nos exercícios executados.' : 'As séries concluídas serão usadas nos gráficos e nas próximas sugestões de carga.', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Concluir', onPress: async () => { await finishWorkout(); router.replace('/(tabs)/progress'); } }]);
+    showNeoDialog({ title: 'Concluir treino?', message: missingEffort ? 'Você pode concluir agora. Para melhorar as sugestões de carga, marque “Sobrou”, “Ideal” ou “Pesou” nos exercícios executados.' : 'As séries concluídas serão usadas nos gráficos e nas próximas sugestões de carga.', icon: 'checkmark-done-outline', actions: [{ label: 'Cancelar', style: 'cancel' }, { label: 'Concluir treino', style: 'accent', onPress: async () => { await finishWorkout(); router.replace('/(tabs)/progress'); } }] });
   };
   const choose = async (exercise: Exercise) => { await addExercise(exercise); setPickerOpen(false); setQuery(''); };
   const done = activeExercises.flatMap(e => e.sets).filter(s => s.completed).length;
@@ -94,4 +98,4 @@ export default function SessionScreen() {
   </SafeAreaView>;
 }
 
-const styles = StyleSheet.create({ content: { padding: 18, paddingBottom: 40 }, header: { flexDirection: 'row', alignItems: 'center', gap: 10 }, iconButton: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }, finishSmall: { minWidth: 68, height: 38, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' }, track: { height: 8, borderRadius: 99, overflow: 'hidden', marginTop: 10 }, fill: { height: '100%', borderRadius: 99 }, exerciseHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }, labels: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5, marginTop: 10 }, setRow: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 13, paddingVertical: 5, paddingHorizontal: 4 }, field: { width: 72, height: 42, borderWidth: 1, borderRadius: 11, textAlign: 'center', fontWeight: '800' }, check: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' }, pickerHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }, search: { height: 52, borderWidth: 1, borderRadius: 16, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 8 }, suggestion: { borderWidth: 1, borderRadius: 15, padding: 10, flexDirection: 'row', gap: 9, alignItems: 'center' }, firstLoad: { borderWidth: 1, borderRadius: 15, padding: 10, flexDirection: 'row', gap: 8, alignItems: 'center' }, apply: { paddingHorizontal: 9, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' } });
+const styles = StyleSheet.create({ content: { padding: 18, paddingBottom: 40 }, header: { flexDirection: 'row', alignItems: 'center', gap: 10 }, iconButton: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }, finishSmall: { minWidth: 68, height: 38, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' }, track: { height: 8, borderRadius: 99, overflow: 'hidden', marginTop: 10 }, fill: { height: '100%', borderRadius: 99 }, exerciseHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }, labels: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5, marginTop: 10 }, setRow: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 13, paddingVertical: 5, paddingHorizontal: 4 }, field: { width: 72, height: 42, borderWidth: 1, borderRadius: 11, textAlign: 'center', fontWeight: '800' }, check: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' }, pickerHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }, search: { height: 52, borderWidth: 1, borderRadius: 16, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 8 }, suggestion: { borderWidth: 1, borderRadius: 15, padding: 10, flexDirection: 'row', gap: 9, alignItems: 'center' }, firstLoad: { borderWidth: 1, borderRadius: 15, padding: 10, flexDirection: 'row', gap: 8, alignItems: 'center' }, apply: { paddingHorizontal: 9, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }, coachButton: { minHeight: 42, borderRadius: 14, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 9 } });

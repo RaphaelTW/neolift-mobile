@@ -16,3 +16,25 @@ Treinos sem `finished_at` são considerados ativos e podem ser retomados após f
 
 ### Progresso
 As consultas consideram somente séries `completed=1` dentro de treinos finalizados. O histórico por exercício e por músculo usa a maior carga registrada por dia.
+
+## Exercise Coach v1.4.0
+
+```text
+Exercise detail / Active session
+          ↓
+     chooseExerciseDemo
+       ↙          ↘
+  3D offline     vídeo online
+      ↓               ↓
+Exercise3D       NetInfo → WebBrowser
+      ↓
+coachProfile(exercise)
+      ↓
+família biomecânica → avatar procedural
+```
+
+O 3D utiliza `@react-three/fiber/native` sobre `expo-gl`. O catálogo não precisa armazenar um modelo 3D por exercício: `coachProfile()` resolve uma família de movimento e o `BodyRig` anima o mesmo avatar procedural.
+
+## Diálogos
+
+Os fluxos de confirmação e aviso chamam `showNeoDialog()` em `src/services/dialog.ts`. `NeoDialogHost` fica montado na raiz e aplica as cores do `AppProvider`, evitando `Alert.alert` nativo nas mensagens do produto.

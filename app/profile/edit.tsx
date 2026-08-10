@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
@@ -7,6 +7,7 @@ import { Button, Card, Chip, Eyebrow, Text } from '@/components/Ui';
 import { useApp } from '@/context/AppProvider';
 import type { ExperienceLevel, FitnessGoal, Gender } from '@/types';
 import { profileLabels } from '@/services/trainingPlan';
+import { showNeoDialog } from '@/services/dialog';
 
 export default function EditProfileScreen() {
   const { colors, profile, saveProfile } = useApp();
@@ -24,7 +25,7 @@ export default function EditProfileScreen() {
 
   const save = async () => {
     const n = Math.round(Number(age) || 0);
-    if (n < 13 || n > 100) return Alert.alert('Idade', 'Informe uma idade entre 13 e 100 anos.');
+    if (n < 13 || n > 100) { showNeoDialog({ title: 'Idade inválida', message: 'Informe uma idade entre 13 e 100 anos.', icon: 'calendar-outline' }); return; }
     setSaving(true);
     try {
       await saveProfile({ gender, age: n, experience, goal, trainingDays, onboardingCompleted: true });

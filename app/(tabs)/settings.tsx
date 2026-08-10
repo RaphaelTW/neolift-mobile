@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import * as Application from 'expo-application';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { useApp } from '@/context/AppProvider';
 import type { ThemeMode, WeightUnit } from '@/types';
 import { profileLabels } from '@/services/trainingPlan';
 import { compactNumber } from '@/utils/format';
+import { showNeoDialog } from '@/services/dialog';
 
 export default function SettingsScreen() {
   const {
@@ -20,14 +21,14 @@ export default function SettingsScreen() {
 
   const doCheck = async () => {
     const info = await checkUpdates();
-    if (!info) return Alert.alert('Atualizações', 'Não foi possível consultar o GitHub agora.');
-    if (!info.hasUpdate) return Alert.alert('Atualizações', `Você já está na versão mais recente (v${info.currentVersion}).`);
+    if (!info) { showNeoDialog({ title: 'Atualizações', message: 'Não foi possível consultar o GitHub agora.', icon: 'cloud-offline-outline' }); return; }
+    if (!info.hasUpdate) { showNeoDialog({ title: 'Tudo atualizado', message: `Você já está na versão mais recente (v${info.currentVersion}).`, icon: 'checkmark-circle-outline' }); return; }
     const policy = info.updateMode === 'forced' ? 'Como há 4 ou mais releases novas, o Android prepara automaticamente a versão mais recente.' : `Há ${info.newerReleaseCount} release${info.newerReleaseCount === 1 ? '' : 's'} nova${info.newerReleaseCount === 1 ? '' : 's'}.`;
-    Alert.alert('Nova versão disponível', `NeoLift v${info.latestVersion} está disponível.\n\n${policy}`);
+    showNeoDialog({ title: 'Nova versão disponível', message: `NeoLift v${info.latestVersion} está disponível.\n\n${policy}`, icon: 'cloud-download-outline' });
   };
-  const sync = async () => { try { const count = await syncCatalog(); Alert.alert('Catálogo atualizado', `${count} exercícios disponíveis localmente.`); } catch (e: any) { Alert.alert('Catálogo', e?.message || 'Falha ao sincronizar.'); } };
-  const download = async () => { try { const uri = await downloadUpdate(); if (uri) Alert.alert('Atualização baixada', 'O APK está pronto. Toque em “Instalar atualização” para abrir o instalador do Android.'); } catch (e: any) { Alert.alert('Atualização', e?.message || 'Não foi possível baixar a atualização.'); } };
-  const install = async () => { try { await installUpdate(); } catch (e: any) { Alert.alert('Atualização', e?.message || 'Não foi possível abrir o instalador.'); } };
+  const sync = async () => { try { const count = await syncCatalog(); showNeoDialog({ title: 'Catálogo atualizado', message: `${count} exercícios disponíveis localmente.`, icon: 'checkmark-circle-outline' }); } catch (e: any) { showNeoDialog({ title: 'Catálogo', message: e?.message || 'Falha ao sincronizar.', icon: 'warning-outline' }); } };
+  const download = async () => { try { const uri = await downloadUpdate(); if (uri) showNeoDialog({ title: 'Atualização baixada', message: 'O APK está pronto. Toque em “Instalar atualização” para abrir o instalador do Android.', icon: 'download-outline' }); } catch (e: any) { showNeoDialog({ title: 'Atualização', message: e?.message || 'Não foi possível baixar a atualização.', icon: 'warning-outline' }); } };
+  const install = async () => { try { await installUpdate(); } catch (e: any) { showNeoDialog({ title: 'Atualização', message: e?.message || 'Não foi possível abrir o instalador.', icon: 'warning-outline' }); } };
 
   return <Screen>
     <View style={styles.hero}><BrandMark size={64} /><View style={{ flex: 1 }}><Eyebrow>PROFILE // LOCAL FIRST</Eyebrow><Text style={styles.title}>Seu NeoLift</Text></View></View>
@@ -46,7 +47,7 @@ export default function SettingsScreen() {
 
     <SectionTitle title="Atualizações" />
     <Card>
-      <View style={styles.split}><View style={{ flex: 1 }}><Text style={{ fontWeight: '900' }}>NeoLift v{Application.nativeApplicationVersion || '1.3.0'}</Text><Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>{releaseInfo?.hasUpdate ? `v${releaseInfo.latestVersion} disponível • ${releaseInfo.newerReleaseCount} releases à frente` : 'Verificação automática de GitHub Releases habilitada.'}</Text>{releaseInfo?.updateMode === 'forced' ? <Text style={{ color: colors.warning, fontSize: 11, marginTop: 5 }}>Política 4+: baixa a última release e abre o instalador automaticamente.</Text> : null}</View>{releaseInfo?.hasUpdate ? <View style={[styles.dot,{ backgroundColor: releaseInfo.updateMode === 'forced' ? colors.warning : colors.success }]} /> : null}</View>
+      <View style={styles.split}><View style={{ flex: 1 }}><Text style={{ fontWeight: '900' }}>NeoLift v{Application.nativeApplicationVersion || '1.4.0'}</Text><Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>{releaseInfo?.hasUpdate ? `v${releaseInfo.latestVersion} disponível • ${releaseInfo.newerReleaseCount} releases à frente` : 'Verificação automática de GitHub Releases habilitada.'}</Text>{releaseInfo?.updateMode === 'forced' ? <Text style={{ color: colors.warning, fontSize: 11, marginTop: 5 }}>Política 4+: baixa a última release e abre o instalador automaticamente.</Text> : null}</View>{releaseInfo?.hasUpdate ? <View style={[styles.dot,{ backgroundColor: releaseInfo.updateMode === 'forced' ? colors.warning : colors.success }]} /> : null}</View>
       <View style={{ height: 10 }} />
       {releaseInfo?.hasUpdate && Platform.OS === 'android' && releaseInfo.apkUrl ? (downloadedUpdateUri ? <Button title="Instalar atualização" onPress={install} /> : <Button title="Baixar atualização" onPress={download} loading={downloadingUpdate} />) : <Button title="Verificar agora" onPress={doCheck} loading={checkingUpdate} kind="secondary" />}
       {releaseInfo?.hasUpdate ? <><View style={{ height: 8 }} /><Button title="Verificar novamente" onPress={doCheck} loading={checkingUpdate} kind="secondary" /></> : null}
