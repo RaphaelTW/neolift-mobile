@@ -2,7 +2,7 @@
   "expo": {
     "name": "NeoLift",
     "slug": "neolift-mobile",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "neolift",
@@ -10,14 +10,14 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.raphaeltw.neolift",
-      "buildNumber": "3"
+      "buildNumber": "4"
     },
     "android": {
       "package": "com.raphaeltw.neolift",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0A0D12"
+        "backgroundColor": "#0B0A0D"
       },
       "permissions": [
         "android.permission.REQUEST_INSTALL_PACKAGES"
@@ -29,11 +29,11 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F5F7FA",
+          "backgroundColor": "#F8F7FB",
           "image": "./assets/splash-icon.png",
           "imageWidth": 180,
           "dark": {
-            "backgroundColor": "#090B10",
+            "backgroundColor": "#0B0A0D",
             "image": "./assets/splash-icon.png"
           }
         }

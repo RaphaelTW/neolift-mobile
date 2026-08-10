@@ -1,5 +1,12 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+async function ensureColumn(db: SQLiteDatabase, table: string, column: string, definition: string) {
+  const columns = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${table})`);
+  if (!columns.some((item) => item.name === column)) {
+    await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition};`);
+  }
+}
+
 export async function migrateDb(db: SQLiteDatabase) {
   await db.execAsync(`
     PRAGMA journal_mode = WAL;
@@ -59,8 +66,48 @@ export async function migrateDb(db: SQLiteDatabase) {
       FOREIGN KEY(workout_exercise_id) REFERENCES workout_exercises(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS workout_exercise_feedback (
+      workout_exercise_id INTEGER PRIMARY KEY NOT NULL,
+      effort TEXT NOT NULL CHECK(effort IN ('easy','good','hard')),
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(workout_exercise_id) REFERENCES workout_exercises(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS user_profile (
+      id INTEGER PRIMARY KEY NOT NULL CHECK(id = 1),
+      gender TEXT NOT NULL,
+      age INTEGER NOT NULL,
+      experience TEXT NOT NULL,
+      goal TEXT NOT NULL,
+      training_days INTEGER NOT NULL DEFAULT 3,
+      onboarding_completed INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS body_measurements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      recorded_at TEXT NOT NULL,
+      weight REAL NOT NULL,
+      neck REAL,
+      chest REAL,
+      waist REAL,
+      hips REAL,
+      left_arm REAL,
+      right_arm REAL,
+      left_thigh REAL,
+      right_thigh REAL,
+      left_calf REAL,
+      right_calf REAL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_workouts_finished ON workouts(finished_at);
     CREATE INDEX IF NOT EXISTS idx_workout_exercises_workout ON workout_exercises(workout_id);
     CREATE INDEX IF NOT EXISTS idx_workout_sets_exercise ON workout_sets(workout_exercise_id);
+    CREATE INDEX IF NOT EXISTS idx_measurements_date ON body_measurements(recorded_at);
   `);
+
+  // Mantém compatibilidade com bancos criados nas versões anteriores.
+  await ensureColumn(db, 'user_profile', 'training_days', 'INTEGER NOT NULL DEFAULT 3');
+  await ensureColumn(db, 'user_profile', 'onboarding_completed', 'INTEGER NOT NULL DEFAULT 1');
 }

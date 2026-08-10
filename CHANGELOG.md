@@ -2,6 +2,32 @@
 
 Todas as mudanças relevantes do NeoLift serão registradas aqui.
 
+## [1.3.0] - 2026-08-10
+
+### Added
+- Onboarding local com sexo, idade, peso inicial, experiência, objetivo e dias de treino.
+- Perfil de treino com níveis Iniciante, Intermediário e Avançado / profissional.
+- Plano semanal adaptativo e ciclo mensal com troca de variações de exercícios.
+- Semanas de Base, Volume, Progressão e Consolidação.
+- Sugestão de carga baseada no histórico real e feedback “Sobrou / Ideal / Pesou”.
+- Histórico detalhado de cada treino com carga máxima por exercício.
+- Histórico corporal com peso, peito, cintura, quadril, braços, coxas e panturrilhas.
+- Gráficos de peso e circunferências com variação desde o primeiro registro.
+- Animação ambiente de fundo em todas as telas principais.
+- Nova identidade visual roxa e ícone com pessoa levantando peso.
+
+### Changed
+- Tema escuro agora usa preto fosco e superfícies grafite.
+- Tema claro usa superfícies claras e roxo como cor principal.
+- Aba Treinar virou Plano e passa a apresentar o treino sugerido do mês.
+- Aba Ajustes virou Perfil e concentra perfil físico, medidas, tema e atualizações.
+- Android `versionCode` e iOS `buildNumber` incrementados para 4.
+
+### Safety
+- O app não inventa carga inicial a partir de sexo, idade ou peso corporal.
+- Progressão de carga é conservadora e opcional, usando somente desempenho registrado.
+- Perfis abaixo de 18 e a partir de 65 anos recebem volume inicial mais conservador.
+
 ## [1.2.0] - 2026-08-10
 
 ### Added

@@ -1,33 +1,39 @@
 export const light = {
-  background: '#F3F6FA',
+  background: '#F8F7FB',
   surface: '#FFFFFF',
-  surfaceAlt: '#EAF0F7',
-  text: '#11151C',
-  muted: '#657083',
-  border: '#DCE4EF',
-  accent: '#087EA4',
-  accent2: '#3768FF',
-  accentSoft: '#DDF5FF',
-  success: '#15803D',
-  danger: '#C24141',
+  surfaceAlt: '#F0ECF7',
+  surfaceStrong: '#E7DDF4',
+  text: '#18131F',
+  muted: '#766C82',
+  border: '#E3DCEB',
+  accent: '#7C3AED',
+  accent2: '#A855F7',
+  accent3: '#C084FC',
+  accentSoft: '#F0E5FF',
+  success: '#1F9D67',
+  danger: '#D14C64',
   warning: '#B7791F',
-  tab: '#FFFFFFEE'
+  tab: '#FFFFFFF2',
+  glow: '#B26CFF'
 };
 
 export const dark = {
-  background: '#080A0F',
-  surface: '#10141C',
-  surfaceAlt: '#161C27',
-  text: '#F3F7FD',
-  muted: '#8C99AB',
-  border: '#252E3D',
-  accent: '#42D4FF',
-  accent2: '#7A7CFF',
-  accentSoft: '#102B36',
-  success: '#54D98C',
-  danger: '#FF7777',
-  warning: '#F5C35B',
-  tab: '#0F131BDD'
+  background: '#0B0A0D',
+  surface: '#151318',
+  surfaceAlt: '#1C1920',
+  surfaceStrong: '#28212E',
+  text: '#F7F3FA',
+  muted: '#A79EAF',
+  border: '#2B2631',
+  accent: '#9D5CFF',
+  accent2: '#B873FF',
+  accent3: '#D8B4FE',
+  accentSoft: '#251833',
+  success: '#65D69B',
+  danger: '#FF718C',
+  warning: '#F6C86F',
+  tab: '#111013F0',
+  glow: '#8B3DFF'
 };
 
 export type AppColors = typeof light;

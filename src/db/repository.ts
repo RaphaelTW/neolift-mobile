@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import type { ActiveExercise, Exercise, MuscleProgress, ProgressPoint, ThemeMode, WeightUnit } from '@/types';
+import type { ActiveExercise, BodyMeasurement, BodyMeasurementInput, EffortRating, Exercise, LoadSuggestion, MuscleProgress, ProgressPoint, ThemeMode, UserProfile, WeightUnit } from '@/types';
 
 const parseExerciseRow = (row: any): Exercise => ({
   id: row.id,
@@ -95,7 +95,7 @@ export async function getActiveWorkoutId(db: SQLiteDatabase) {
   return row?.id ?? null;
 }
 
-export async function addExerciseToWorkout(db: SQLiteDatabase, workoutId: number, exercise: Exercise) {
+export async function addExerciseToWorkout(db: SQLiteDatabase, workoutId: number, exercise: Exercise, setCount = 3, defaultReps = 10) {
   const existing = await db.getFirstAsync<{ id: number }>(
     'SELECT id FROM workout_exercises WHERE workout_id = ? AND exercise_id = ?', workoutId, exercise.id
   );
@@ -106,10 +106,10 @@ export async function addExerciseToWorkout(db: SQLiteDatabase, workoutId: number
     workoutId, exercise.id, exercise.name, exercise.primaryMuscles[0] ?? 'other', (pos?.maxPos ?? -1) + 1
   );
   const id = Number(result.lastInsertRowId);
-  for (let setNumber = 1; setNumber <= 3; setNumber++) {
+  for (let setNumber = 1; setNumber <= setCount; setNumber++) {
     await db.runAsync(
       'INSERT INTO workout_sets(workout_exercise_id,set_number,reps,weight,completed,created_at) VALUES (?,?,?,?,?,?)',
-      id, setNumber, 10, 0, 0, new Date().toISOString()
+      id, setNumber, defaultReps, 0, 0, new Date().toISOString()
     );
   }
   return id;
@@ -124,11 +124,13 @@ export async function getActiveExercises(db: SQLiteDatabase, workoutId: number):
     const sets = await db.getAllAsync<any>(
       'SELECT * FROM workout_sets WHERE workout_exercise_id = ? ORDER BY set_number', e.id
     );
+    const feedback = await db.getFirstAsync<{ effort: EffortRating }>('SELECT effort FROM workout_exercise_feedback WHERE workout_exercise_id = ?', e.id);
     result.push({
       id: e.id,
       exerciseId: e.exercise_id,
       exerciseName: e.exercise_name,
       primaryMuscle: e.primary_muscle,
+      effort: feedback?.effort ?? null,
       sets: sets.map(s => ({
         id: s.id,
         workoutExerciseId: s.workout_exercise_id,
@@ -238,4 +240,177 @@ export async function exerciseHistory(db: SQLiteDatabase, exerciseId: string): P
     GROUP BY date(w.finished_at) ORDER BY d ASC LIMIT 16
   `, exerciseId);
   return rows.map(r => ({ label: r.d.slice(5).split('-').reverse().join('/'), value: Number(r.value), date: r.d }));
+}
+
+const parseProfile = (row: any): UserProfile => ({
+  id: Number(row.id),
+  gender: row.gender,
+  age: Number(row.age),
+  experience: row.experience,
+  goal: row.goal,
+  trainingDays: Number(row.training_days),
+  onboardingCompleted: Boolean(row.onboarding_completed),
+  createdAt: row.created_at,
+  updatedAt: row.updated_at
+});
+
+const parseMeasurement = (row: any): BodyMeasurement => ({
+  id: Number(row.id),
+  recordedAt: row.recorded_at,
+  weight: Number(row.weight),
+  neck: row.neck == null ? null : Number(row.neck),
+  chest: row.chest == null ? null : Number(row.chest),
+  waist: row.waist == null ? null : Number(row.waist),
+  hips: row.hips == null ? null : Number(row.hips),
+  leftArm: row.left_arm == null ? null : Number(row.left_arm),
+  rightArm: row.right_arm == null ? null : Number(row.right_arm),
+  leftThigh: row.left_thigh == null ? null : Number(row.left_thigh),
+  rightThigh: row.right_thigh == null ? null : Number(row.right_thigh),
+  leftCalf: row.left_calf == null ? null : Number(row.left_calf),
+  rightCalf: row.right_calf == null ? null : Number(row.right_calf)
+});
+
+export async function getUserProfile(db: SQLiteDatabase): Promise<UserProfile | null> {
+  const row = await db.getFirstAsync<any>('SELECT * FROM user_profile WHERE id=1');
+  return row ? parseProfile(row) : null;
+}
+
+export async function saveUserProfile(db: SQLiteDatabase, profile: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>) {
+  const now = new Date().toISOString();
+  await db.runAsync(
+    `INSERT INTO user_profile(id,gender,age,experience,goal,training_days,onboarding_completed,created_at,updated_at)
+     VALUES (1,?,?,?,?,?,?,?,?)
+     ON CONFLICT(id) DO UPDATE SET gender=excluded.gender, age=excluded.age, experience=excluded.experience,
+       goal=excluded.goal, training_days=excluded.training_days, onboarding_completed=excluded.onboarding_completed,
+       updated_at=excluded.updated_at`,
+    profile.gender, profile.age, profile.experience, profile.goal, profile.trainingDays,
+    profile.onboardingCompleted ? 1 : 0, now, now
+  );
+  return getUserProfile(db);
+}
+
+export async function addBodyMeasurement(db: SQLiteDatabase, input: BodyMeasurementInput) {
+  const now = new Date().toISOString();
+  const result = await db.runAsync(
+    `INSERT INTO body_measurements(recorded_at,weight,neck,chest,waist,hips,left_arm,right_arm,left_thigh,right_thigh,left_calf,right_calf)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    now, input.weight, input.neck, input.chest, input.waist, input.hips, input.leftArm, input.rightArm,
+    input.leftThigh, input.rightThigh, input.leftCalf, input.rightCalf
+  );
+  return Number(result.lastInsertRowId);
+}
+
+export async function latestBodyMeasurement(db: SQLiteDatabase): Promise<BodyMeasurement | null> {
+  const row = await db.getFirstAsync<any>('SELECT * FROM body_measurements ORDER BY datetime(recorded_at) DESC, id DESC LIMIT 1');
+  return row ? parseMeasurement(row) : null;
+}
+
+export async function recentBodyMeasurements(db: SQLiteDatabase, limit = 24): Promise<BodyMeasurement[]> {
+  const rows = await db.getAllAsync<any>('SELECT * FROM body_measurements ORDER BY datetime(recorded_at) DESC, id DESC LIMIT ?', limit);
+  return rows.map(parseMeasurement);
+}
+
+const metricColumns: Record<string, string> = {
+  weight: 'weight', neck: 'neck', chest: 'chest', waist: 'waist', hips: 'hips',
+  leftArm: 'left_arm', rightArm: 'right_arm', leftThigh: 'left_thigh', rightThigh: 'right_thigh',
+  leftCalf: 'left_calf', rightCalf: 'right_calf'
+};
+
+export async function bodyMetricHistory(db: SQLiteDatabase, metric: keyof typeof metricColumns, limit = 24): Promise<ProgressPoint[]> {
+  const column = metricColumns[metric];
+  const rows = await db.getAllAsync<any>(
+    `SELECT date(recorded_at) d, ${column} value FROM body_measurements
+     WHERE ${column} IS NOT NULL AND ${column} > 0 ORDER BY datetime(recorded_at) ASC, id ASC LIMIT ?`, limit
+  );
+  return rows.map((row) => ({ label: row.d.slice(5).split('-').reverse().join('/'), value: Number(row.value), date: row.d }));
+}
+
+export async function setExerciseEffort(db: SQLiteDatabase, workoutExerciseId: number, effort: EffortRating) {
+  await db.runAsync(
+    `INSERT INTO workout_exercise_feedback(workout_exercise_id,effort,updated_at) VALUES (?,?,?)
+     ON CONFLICT(workout_exercise_id) DO UPDATE SET effort=excluded.effort, updated_at=excluded.updated_at`,
+    workoutExerciseId, effort, new Date().toISOString()
+  );
+}
+
+function roundLoad(value: number, unit: WeightUnit) {
+  const step = unit === 'kg' ? 0.5 : 1;
+  return Math.max(0, Math.round(value / step) * step);
+}
+
+export async function loadSuggestion(db: SQLiteDatabase, exerciseId: string, unit: WeightUnit): Promise<LoadSuggestion | null> {
+  const rows = await db.getAllAsync<any>(`
+    SELECT we.id, w.finished_at, MAX(ws.weight) max_weight,
+      SUM(CASE WHEN ws.completed=1 THEN 1 ELSE 0 END) completed_sets,
+      wf.effort
+    FROM workout_exercises we
+    JOIN workouts w ON w.id=we.workout_id
+    JOIN workout_sets ws ON ws.workout_exercise_id=we.id
+    LEFT JOIN workout_exercise_feedback wf ON wf.workout_exercise_id=we.id
+    WHERE we.exercise_id=? AND w.finished_at IS NOT NULL AND ws.completed=1 AND ws.weight>0
+    GROUP BY we.id ORDER BY datetime(w.finished_at) DESC, we.id DESC LIMIT 2
+  `, exerciseId);
+
+  if (!rows.length) return null;
+  const current = Number(rows[0].max_weight || 0);
+  if (current <= 0) return null;
+  const latestEffort = rows[0].effort as EffortRating | null;
+  const previousEffort = rows[1]?.effort as EffortRating | null;
+
+  let deltaPct = 0;
+  let confidence: LoadSuggestion['confidence'] = 'low';
+  let reason = 'Mantenha a carga e priorize técnica e amplitude confortáveis.';
+
+  if (latestEffort === 'hard') {
+    deltaPct = -5;
+    confidence = 'medium';
+    reason = 'A última sessão foi marcada como pesada. Uma pequena redução pode ajudar a recuperar técnica e repetições.';
+  } else if (latestEffort === 'easy' && previousEffort === 'easy') {
+    deltaPct = 5;
+    confidence = 'high';
+    reason = 'Duas sessões seguidas foram marcadas como confortáveis. O app sugere um aumento conservador.';
+  } else if (latestEffort === 'easy') {
+    deltaPct = 2.5;
+    confidence = 'medium';
+    reason = 'A última sessão teve boa sobra. O app sugere um pequeno aumento, sem obrigar a mudança.';
+  } else if (latestEffort === 'good') {
+    deltaPct = 0;
+    confidence = 'medium';
+    reason = 'A carga parece adequada. Repita e tente melhorar repetições ou execução antes de aumentar.';
+  }
+
+  return {
+    exerciseId,
+    currentWeight: current,
+    suggestedWeight: roundLoad(current * (1 + deltaPct / 100), unit),
+    deltaPct,
+    reason,
+    confidence
+  };
+}
+
+export async function activeWorkoutName(db: SQLiteDatabase, workoutId: number) {
+  const row = await db.getFirstAsync<{ name: string }>('SELECT name FROM workouts WHERE id=?', workoutId);
+  return row?.name ?? 'Treino livre';
+}
+
+export async function workoutHistoryDetailed(db: SQLiteDatabase, limit = 20) {
+  const workouts = await db.getAllAsync<any>(`
+    SELECT w.id,w.name,w.started_at,w.finished_at,
+      COUNT(DISTINCT we.id) exercises,
+      COALESCE(SUM(CASE WHEN ws.completed=1 THEN ws.weight*ws.reps ELSE 0 END),0) volume
+    FROM workouts w
+    LEFT JOIN workout_exercises we ON we.workout_id=w.id
+    LEFT JOIN workout_sets ws ON ws.workout_exercise_id=we.id
+    WHERE w.finished_at IS NOT NULL
+    GROUP BY w.id ORDER BY datetime(w.finished_at) DESC LIMIT ?`, limit);
+
+  for (const workout of workouts) {
+    workout.items = await db.getAllAsync<any>(`
+      SELECT we.exercise_name name, we.primary_muscle muscle, MAX(ws.weight) max_weight,
+        SUM(CASE WHEN ws.completed=1 THEN 1 ELSE 0 END) completed_sets
+      FROM workout_exercises we LEFT JOIN workout_sets ws ON ws.workout_exercise_id=we.id
+      WHERE we.workout_id=? GROUP BY we.id ORDER BY we.position,we.id`, workout.id);
+  }
+  return workouts;
 }
