@@ -1,6 +1,8 @@
 <div align="center">
-  <img src="./assets/icon.png" width="112" alt="NeoLift logo" />
-  <h1>NeoLift</h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/branding/neolift-wordmark-light.png" />
+    <img src="./assets/branding/neolift-wordmark-dark.png" width="360" alt="NeoLift" />
+  </picture>
   <p><strong>Treino offline-first, progresso visual e catálogo aberto de exercícios.</strong></p>
 
   <p>
@@ -9,7 +11,7 @@
     <img src="https://img.shields.io/badge/Android-7%2B-3DDC84?logo=android" alt="Android 7+" />
     <img src="https://img.shields.io/badge/iOS-16.4%2B-111111?logo=apple" alt="iOS 16.4+" />
     <img src="https://img.shields.io/badge/storage-SQLite%20local-4F46E5" alt="SQLite local" />
-    <img src="https://img.shields.io/badge/version-v1.1.0-42D4FF" alt="Version" />
+    <img src="https://img.shields.io/badge/version-v1.2.0-42D4FF" alt="Version" />
   </p>
 
   <p>
@@ -17,7 +19,7 @@
     <a href="#-experiência">Experiência</a> ·
     <a href="#-arquitetura">Arquitetura</a> ·
     <a href="#-atualizações-pelo-github">Atualizações</a> ·
-    <a href="#-release-v110">Release</a>
+    <a href="#-release-v120">Release</a>
   </p>
 </div>
 
@@ -181,32 +183,11 @@ eas build -p android --profile production
 eas build -p ios --profile production
 ```
 
-## ✦ Release v1.1.0
+## ✦ Release v1.2.0
 
-Commit profissional da nova versão:
+A v1.2.0 apresenta a nova identidade visual do NeoLift: símbolo ascendente inspirado no monograma **N**, novo ícone do aplicativo, adaptive icon Android, splash e wordmarks para fundos claros e escuros. A versão também consolida a compatibilidade com o Expo SDK 57 e suas dependências nativas.
 
-```bash
-git add app.json package.json README.md CHANGELOG.md RELEASE-v1.1.0.md app src docs
-git commit -m "feat(updater): adiciona política inteligente de atualização Android" -m "Conta releases estáveis do GitHub, baixa antecipadamente o APK, solicita instalação quando há 1 a 3 versões novas e aplica o fluxo automático para a release mais recente quando o app está 4 ou mais releases atrasado."
-git push origin main
-```
-
-Tag e release:
-
-```bash
-git tag -a v1.1.0 -m "NeoLift v1.1.0 — Smart GitHub Updates"
-git push origin v1.1.0
-
-gh release create v1.1.0 \
-  --title "NeoLift v1.1.0 — Smart GitHub Updates" \
-  --notes-file RELEASE-v1.1.0.md
-```
-
-Depois do build Android, anexe o APK assinado com a mesma chave das versões anteriores:
-
-```bash
-gh release upload v1.1.0 ./NeoLift-v1.1.0.apk --clobber
-```
+Consulte [`RELEASE-v1.2.0.md`](./RELEASE-v1.2.0.md) para as notas completas da versão.
 
 <details>
 <summary><strong>Checklist antes de uma release</strong></summary>

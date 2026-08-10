@@ -2,6 +2,22 @@
 
 Todas as mudanças relevantes do NeoLift serão registradas aqui.
 
+## [1.2.0] - 2026-08-10
+
+### Added
+- Nova identidade visual com símbolo ascendente exclusivo do NeoLift.
+- Wordmarks para fundos claros e escuros em `assets/branding`.
+
+### Changed
+- Ícone principal, adaptive icon Android e splash atualizados.
+- Expo, Expo Router, React Native e módulos nativos alinhados ao Expo SDK 57.
+- Android `versionCode` e iOS `buildNumber` incrementados para 3.
+
+### Maintenance
+- Dependências obrigatórias do Expo Router e do `@expo/vector-icons` declaradas diretamente.
+- Configuração TypeScript atualizada para TypeScript 6.
+- Arquivos locais do IntelliJ/Android Studio removidos do controle de versão.
+
 ## [1.1.0] - 2026-08-07
 
 ### Added
