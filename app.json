@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "NeoLift",
+    "slug": "neolift-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "neolift",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.raphaeltw.neolift",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.raphaeltw.neolift",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A0D12"
+      },
+      "permissions": [
+        "android.permission.REQUEST_INSTALL_PACKAGES"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F5F7FA",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "dark": {
+            "backgroundColor": "#090B10",
+            "image": "./assets/splash-icon.png"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "githubOwner": "RaphaelTW",
+      "githubRepo": "neolift-mobile"
+    }
+  }
+}
