@@ -1,26 +1,28 @@
-# Third-Party Notices
+# Third-party notices
+
+NeoLift combina bibliotecas de software e conjuntos públicos de exercícios. As licenças abaixo continuam pertencendo aos respectivos autores/projetos.
 
 ## free-exercise-db
 
-- Project: `yuhonas/free-exercise-db`
-- Source: https://github.com/yuhonas/free-exercise-db
-- Purpose in NeoLift: exercise metadata, instructions, muscle classifications and image paths.
-- License: Unlicense / public domain dedication.
+- Projeto: `yuhonas/free-exercise-db`
+- Uso no NeoLift: catálogo principal/offline de exercícios e imagens.
+- Licença informada pelo projeto: **Unlicense / Public Domain**.
 
-NeoLift does not claim authorship of the upstream exercise dataset or upstream exercise imagery.
+## Wger
 
-## React Three Fiber
+- Projeto: `wger-project/wger`
+- Uso no NeoLift: segunda fonte pública opcional para exercícios, imagens e vídeos.
+- O software Wger é **AGPL-3.0-or-later**.
+- A documentação do Wger informa licenciamento Creative Commons para o conteúdo de exercícios; o conjunto inicial é identificado como **CC-BY-SA 3.0**. Algumas entradas/mídias podem trazer autor/licença próprios.
+- O NeoLift preserva `source`, `license`, `licenseUrl`, `licenseAuthor` e os metadados de licença de cada mídia retornados pela API quando disponíveis.
+- A integração não copia código do Wger para o NeoLift; consome os endpoints públicos de leitura.
 
-- Project: `pmndrs/react-three-fiber`
-- Purpose: declarative 3D rendering for the offline Exercise Coach.
-- License: MIT.
+## React Three Fiber / Three.js
 
-## Three.js
+Usados no Exercise Coach 3D procedural.
 
-- Project: `mrdoob/three.js`
-- Purpose: 3D scene primitives, materials and transforms used by the procedural avatar.
-- License: MIT.
+## Expo / React Native
 
-## YouTube search
+Usados para a aplicação mobile, SQLite, vídeo, GL e integração com Android/iOS.
 
-NeoLift does not redistribute or bundle YouTube videos. The online video option opens a contextual search in the system browser so the user can choose a third-party video. Video availability, content and licensing remain with the respective publisher/platform.
+Consulte também `docs/WGER_INTEGRATION.md` e os arquivos de licença das dependências instaladas pelo npm.

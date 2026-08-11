@@ -1,3 +1,17 @@
+
+## 🌐 Biblioteca híbrida: offline + Wger
+
+A v1.5.0 mantém o `free-exercise-db` como base local e adiciona sincronização opcional com os **endpoints públicos de exercícios do Wger**, que podem ser lidos sem conta/API key.
+
+- exercícios novos do Wger entram no SQLite como `wger:<id>`;
+- nomes equivalentes enriquecem o exercício offline e viram `hybrid`;
+- imagens e vídeos Wger são usados quando disponíveis;
+- vídeo toca dentro do NeoLift usando `expo-video`;
+- o Exercise Coach 3D continua funcionando como fallback offline;
+- fonte, autor e licença são preservados no catálogo.
+
+A sincronização fica em **Configurações → Catálogo → Wger Open Exercise Library**. Perfil, medidas e histórico de treino não são enviados ao Wger. Veja [`docs/WGER_INTEGRATION.md`](docs/WGER_INTEGRATION.md).
+
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./assets/branding/neolift-wordmark-light.png" />
@@ -10,7 +24,7 @@
     <img src="https://img.shields.io/badge/Expo-SDK%2057-111111?logo=expo" alt="Expo SDK 57" />
     <img src="https://img.shields.io/badge/React%20Native-0.86-7C3AED?logo=react" alt="React Native" />
     <img src="https://img.shields.io/badge/SQLite-local-9D5CFF" alt="SQLite" />
-    <img src="https://img.shields.io/badge/version-v1.4.0-A855F7" alt="v1.4.0" />
+    <img src="https://img.shields.io/badge/version-v1.5.0-A855F7" alt="v1.5.0" />
   </p>
 </div>
 
@@ -18,7 +32,7 @@
 
 Aplicativo React Native + Expo para Android e iOS. O catálogo usa o `free-exercise-db`; perfil, treinos, medidas, séries, cargas, progresso e preferências ficam no SQLite do aparelho.
 
-A v1.4.0 mantém a identidade roxa, o tema claro e o preto fosco e adiciona o **Exercise Coach**: demonstração 3D offline para todo o catálogo, vídeo online contextual e diálogos totalmente integrados ao visual NeoLift.
+A v1.5.0 mantém a identidade roxa, o tema claro e o preto fosco, preserva o **Exercise Coach 3D** e adiciona uma biblioteca híbrida com exercícios e mídias públicas do Wger.
 
 <details>
 <summary><strong>O que existe nesta versão</strong></summary>
@@ -35,7 +49,9 @@ A v1.4.0 mantém a identidade roxa, o tema claro e o preto fosco e adiciona o **
 - peso e medidas corporais por data;
 - temas Sistema, Claro e Escuro;
 - GitHub Releases + política Android de atualização 4+;
-- Exercise Coach com escolha 3D offline ou vídeo online;
+- Exercise Coach com escolha 3D offline ou vídeo Wger dentro do app quando disponível;
+- sincronização pública do Wger sem conta/API key para leitura;
+- catálogo híbrido e filtros por fonte;
 - avatar 3D procedural com pausa, velocidade e três ângulos de câmera;
 - alertas/confirmacões com o mesmo visual do app.
 
@@ -56,7 +72,7 @@ Como quer ver o exercício?
 
 O 3D é renderizado no aparelho e funciona offline. Em vez de empacotar centenas de arquivos pesados, um avatar procedural é animado por famílias biomecânicas, cobrindo todo o catálogo inclusive exercícios adicionados no futuro por meio de um fallback genérico.
 
-O vídeo usa internet e abre uma busca contextual pelo nome do exercício no navegador integrado. Não exige API key. Se a pessoa estiver offline, o NeoLift exibe um diálogo temático oferecendo imediatamente o modo 3D.
+Quando a sincronização Wger encontra um vídeo para o exercício, ele é reproduzido **dentro do NeoLift** com `expo-video`. Se não houver mídia Wger, o botão oferece uma busca online como fallback. Sem internet, o NeoLift mantém a demonstração 3D e as instruções locais.
 
 Detalhes em [`docs/EXERCISE_COACH.md`](docs/EXERCISE_COACH.md) e a validação de cobertura em [`docs/COACH_COVERAGE.md`](docs/COACH_COVERAGE.md).
 
@@ -83,6 +99,8 @@ flowchart TD
   CTX --> DB[(SQLite local)]
   CTX --> PLAN[Training Plan Engine]
   CTX --> CAT[Exercise Catalog]
+  CAT --> FREE[free-exercise-db offline]
+  CAT --> WGER[Wger API pública]
   CTX --> UPD[GitHub Update Service]
   DB --> PROFILE[Perfil + medidas]
   DB --> WORKOUT[Workouts + sets + esforço]
@@ -131,8 +149,11 @@ npm run ios
 Validação:
 
 ```bash
+npm ci
 npm run typecheck
 npm run release:check
+npm run security:check
+npx expo-doctor
 ```
 
 ## Build APK
@@ -151,24 +172,25 @@ eas build -p android --profile preview
 ```
 
 O perfil `preview` em `eas.json` usa `buildType: apk`.
+As versões são lidas localmente do `app.json` por meio de `cli.appVersionSource: local`.
 
-## Publicar v1.4.0
+## Publicar v1.5.0
 
 ```bash
 git add .
-git commit -m "feat(coach): adiciona demonstrações 3D e vídeos de execução" -m "Cria Exercise Coach com avatar 3D offline para todo o catálogo, escolha entre 3D e vídeo online e substitui alertas nativos por diálogos com a identidade visual NeoLift."
+git commit -m "feat(catalog): integra biblioteca pública do Wger" -m "Adiciona sincronização híbrida de exercícios, imagens e vídeos Wger sem autenticação, player de vídeo interno, atribuição de licenças e filtros por fonte, preservando a base offline e o Exercise Coach 3D."
 git push origin main
 
-git tag -a v1.4.0 -m "NeoLift v1.4.0 — Exercise Coach 3D"
-git push origin v1.4.0
+git tag -a v1.5.0 -m "NeoLift v1.5.0 — Open Exercise Library"
+git push origin v1.5.0
 
-gh release create v1.4.0 --title "NeoLift v1.4.0 — Exercise Coach 3D" --notes-file RELEASE-v1.4.0.md
+gh release create v1.5.0 --title "NeoLift v1.5.0 — Open Exercise Library" --notes-file RELEASE-v1.5.0.md
 ```
 
-Depois do EAS Build, baixe o APK, renomeie para `NeoLift-v1.4.0.apk` e anexe:
+Depois do EAS Build, baixe o APK, renomeie para `NeoLift-v1.5.0.apk` e anexe:
 
 ```bash
-gh release upload v1.4.0 ./NeoLift-v1.4.0.apk --clobber
+gh release upload v1.5.0 ./NeoLift-v1.5.0.apk --clobber
 ```
 
 ## Atualização Android
@@ -188,7 +210,7 @@ Não existe conta obrigatória. O app guarda localmente:
 
 ## Catálogo
 
-Fonte: `yuhonas/free-exercise-db`. O catálogo pode ser empacotado com:
+A base principal é `yuhonas/free-exercise-db`; o Wger é uma segunda fonte pública opcional. O catálogo offline pode ser empacotado com:
 
 ```bash
 npm run sync:exercises
@@ -196,4 +218,4 @@ npm run sync:exercises
 
 ## Versão
 
-**NeoLift v1.4.0 — Exercise Coach 3D**
+**NeoLift v1.5.0 — Open Exercise Library**

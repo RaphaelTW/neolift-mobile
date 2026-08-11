@@ -4,6 +4,23 @@ export type Gender = 'male' | 'female' | 'prefer_not_to_say';
 export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
 export type FitnessGoal = 'lose_fat' | 'gain_muscle' | 'gain_weight';
 export type EffortRating = 'easy' | 'good' | 'hard';
+export type ExerciseSource = 'free-exercise-db' | 'wger' | 'hybrid';
+
+export type ExerciseMedia = {
+  type: 'image' | 'video';
+  url: string;
+  source: 'free-exercise-db' | 'wger';
+  isMain?: boolean;
+  animated?: boolean;
+  style?: string | null;
+  width?: number | null;
+  height?: number | null;
+  durationSeconds?: number | null;
+  codec?: string | null;
+  license?: string | null;
+  licenseUrl?: string | null;
+  author?: string | null;
+};
 
 export type Exercise = {
   id: string;
@@ -17,6 +34,14 @@ export type Exercise = {
   instructions: string[];
   category: string;
   images: string[];
+  videos?: string[];
+  source?: ExerciseSource;
+  sourceId?: string | null;
+  sourceUrl?: string | null;
+  license?: string | null;
+  licenseUrl?: string | null;
+  licenseAuthor?: string | null;
+  media?: ExerciseMedia[];
 };
 
 export type UserProfile = {
@@ -67,19 +92,8 @@ export type ActiveExercise = {
   sets: WorkoutSet[];
 };
 
-export type ProgressPoint = {
-  label: string;
-  value: number;
-  date: string;
-};
-
-export type MuscleProgress = {
-  muscle: string;
-  current: number;
-  first: number;
-  gainPct: number;
-  sessions: number;
-};
+export type ProgressPoint = { label: string; value: number; date: string };
+export type MuscleProgress = { muscle: string; current: number; first: number; gainPct: number; sessions: number };
 
 export type LoadSuggestion = {
   exerciseId: string;
@@ -90,22 +104,8 @@ export type LoadSuggestion = {
   confidence: 'low' | 'medium' | 'high';
 };
 
-export type PlanExercise = {
-  exerciseId: string;
-  name: string;
-  sets: number;
-  minReps: number;
-  maxReps: number;
-  note?: string;
-};
-
-export type PlanDay = {
-  id: string;
-  name: string;
-  focus: string;
-  exercises: PlanExercise[];
-};
-
+export type PlanExercise = { exerciseId: string; name: string; sets: number; minReps: number; maxReps: number; note?: string };
+export type PlanDay = { id: string; name: string; focus: string; exercises: PlanExercise[] };
 export type WeeklyTrainingPlan = {
   monthKey: string;
   monthLabel: string;

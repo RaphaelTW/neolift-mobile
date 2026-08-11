@@ -1,14 +1,19 @@
-# Fluxo de atualização — NeoLift v1.1.0
+# Fluxo de atualização — NeoLift v1.5.0
 
 ## Fonte de versão
 
 O aplicativo consulta releases públicas do GitHub em:
 
-`https://api.github.com/repos/<owner>/<repo>/releases?per_page=30`
+`https://api.github.com/repos/<owner>/<repo>/releases?per_page=100`
 
 Não é necessário token para consultar releases de um repositório público dentro dos limites anônimos do GitHub.
 
 O app ignora drafts e prereleases e compara versões estáveis usando SemVer.
+Entre as versões mais novas, seleciona a primeira release que possua um asset `.apk`
+publicado e não vazio, priorizando o nome `NeoLift-v<versão>.apk`.
+
+Ao tocar em **Verificar agora** no Android, a consulta e o download acontecem no
+mesmo fluxo. Ao final, o botão muda para **Instalar atualização**.
 
 ## Regra de defasagem
 
@@ -49,7 +54,13 @@ A release mais recente precisa possuir um asset terminado em `.apk`, por exemplo
 
 `NeoLift-v1.1.0.apk`
 
-O arquivo é armazenado em `documentDirectory/updates/`. Se já estiver baixado, ele é reutilizado em vez de ser baixado novamente.
+O arquivo é armazenado em `documentDirectory/updates/v<versão>/`. Cada versão
+possui seu próprio cache, impedindo que um APK antigo seja usado para uma release
+nova. O download usa a extensão temporária `.download`, valida o tamanho informado
+pelo GitHub e só então move o arquivo para o nome definitivo.
+
+Se o arquivo estiver vazio, incompleto ou tiver tamanho diferente do asset da
+release, ele é descartado e baixado novamente.
 
 ## Permissão Android
 

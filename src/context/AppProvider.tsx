@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { Platform, useColorScheme } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import type {
-  ActiveExercise, BodyMeasurement, BodyMeasurementInput, EffortRating, Exercise, LoadSuggestion,
+  ActiveExercise, BodyMeasurement, BodyMeasurementInput, EffortRating, Exercise, ExerciseSource, LoadSuggestion,
   MuscleProgress, PlanDay, ProgressPoint, ThemeMode, UserProfile, WeightUnit
 } from '@/types';
 import { dark, light, type AppColors } from '@/theme/colors';
@@ -13,6 +13,7 @@ import {
   addSet as addSetRepo,
   bodyMetricHistory,
   countExercises,
+  countExercisesBySource,
   createWorkout,
   dashboardStats,
   exerciseHistory,
@@ -21,6 +22,7 @@ import {
   getActiveWorkoutId,
   getExercise,
   getPreferences,
+  getSetting,
   getUserProfile,
   isFavorite,
   latestBodyMeasurement,
@@ -39,6 +41,7 @@ import {
   workoutHistoryDetailed
 } from '@/db/repository';
 import { ensureCatalog, syncCatalogFromGithub } from '@/services/exerciseCatalog';
+import { shouldRefreshWger, syncWgerCatalog, WGER_SYNC_SETTING } from '@/services/wgerCatalog';
 import { checkGithubRelease, downloadAndroidUpdate, installOrOpenRelease, type ReleaseInfo } from '@/services/githubUpdate';
 import { showNeoDialog } from '@/services/dialog';
 
@@ -50,6 +53,7 @@ export type Dashboard = {
 };
 
 type ProfileInput = Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>;
+type CatalogSources = { free: number; wger: number; hybrid: number; total: number };
 
 type AppContextValue = {
   colors: AppColors;
@@ -58,7 +62,9 @@ type AppContextValue = {
   weightUnit: WeightUnit;
   ready: boolean;
   catalogCount: number;
+  catalogSources: CatalogSources;
   syncingCatalog: boolean;
+  syncingWger: boolean;
   dashboard: Dashboard;
   recent: any[];
   muscles: MuscleProgress[];
@@ -69,11 +75,12 @@ type AppContextValue = {
   activeExercises: ActiveExercise[];
   setThemeMode: (mode: ThemeMode) => Promise<void>;
   setWeightUnit: (unit: WeightUnit) => Promise<void>;
-  findExercises: (query?: string, muscle?: string, limit?: number) => Promise<Exercise[]>;
+  findExercises: (query?: string, muscle?: string, limit?: number, source?: 'all' | ExerciseSource) => Promise<Exercise[]>;
   findExercise: (id: string) => Promise<Exercise | null>;
   favorite: (id: string) => Promise<boolean>;
   toggleFavorite: (id: string) => Promise<boolean>;
   syncCatalog: () => Promise<number>;
+  syncWger: () => Promise<{ fetched: number; enriched: number; added: number; free: number; wger: number; hybrid: number; total: number }>;
   startWorkout: (name?: string) => Promise<number>;
   startPlannedWorkout: (day: PlanDay) => Promise<number>;
   addExercise: (exercise: Exercise) => Promise<void>;
@@ -98,7 +105,7 @@ type AppContextValue = {
   downloadingUpdate: boolean;
   downloadedUpdateUri: string | null;
   checkUpdates: () => Promise<ReleaseInfo | null>;
-  downloadUpdate: () => Promise<string | null>;
+  downloadUpdate: (info?: ReleaseInfo) => Promise<string | null>;
   installUpdate: () => Promise<void>;
 };
 
@@ -111,7 +118,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [themeMode, setThemeState] = useState<ThemeMode>('system');
   const [weightUnit, setWeightUnitState] = useState<WeightUnit>('kg');
   const [catalogCount, setCatalogCount] = useState(0);
+  const [catalogSources, setCatalogSources] = useState<CatalogSources>({ free: 0, wger: 0, hybrid: 0, total: 0 });
   const [syncingCatalog, setSyncingCatalog] = useState(false);
+  const [syncingWger, setSyncingWger] = useState(false);
   const [dashboard, setDashboard] = useState<Dashboard>({ sessions: 0, weeklyVolume: 0, prs: 0, lastWorkout: null });
   const [recent, setRecent] = useState<any[]>([]);
   const [muscles, setMuscles] = useState<MuscleProgress[]>([]);
@@ -123,18 +132,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [releaseInfo, setReleaseInfo] = useState<ReleaseInfo | null>(null);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [downloadingUpdate, setDownloadingUpdate] = useState(false);
-  const [downloadedUpdateUri, setDownloadedUpdateUri] = useState<string | null>(null);
+  const [downloadedUpdate, setDownloadedUpdate] = useState<{ version: string; uri: string } | null>(null);
   const promptedUpdateRef = useRef<string | null>(null);
 
   const isDark = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
   const colors = isDark ? dark : light;
+  const downloadedUpdateUri = downloadedUpdate && releaseInfo && downloadedUpdate.version === releaseInfo.latestVersion
+    ? downloadedUpdate.uri
+    : null;
 
   const checkUpdates = useCallback(async () => {
     setCheckingUpdate(true);
     try {
       const info = await checkGithubRelease();
       setReleaseInfo(info);
-      if (!info.hasUpdate) setDownloadedUpdateUri(null);
+      setDownloadedUpdate((downloaded) => downloaded?.version === info.latestVersion && info.hasUpdate
+        ? downloaded
+        : null);
       return info;
     } catch {
       return null;
@@ -148,16 +162,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setDownloadingUpdate(true);
     try {
       const uri = await downloadAndroidUpdate(info);
-      setDownloadedUpdateUri(uri);
+      setDownloadedUpdate({ version: info.latestVersion, uri });
       return uri;
     } finally {
       setDownloadingUpdate(false);
     }
   }, []);
 
-  const downloadUpdate = useCallback(async () => {
-    if (!releaseInfo?.hasUpdate) return null;
-    return prepareUpdate(releaseInfo);
+  const downloadUpdate = useCallback(async (info?: ReleaseInfo) => {
+    const target = info ?? releaseInfo;
+    if (!target?.hasUpdate) return null;
+    return prepareUpdate(target);
   }, [prepareUpdate, releaseInfo]);
 
   const installUpdate = useCallback(async () => {
@@ -225,20 +240,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       await ensureCatalog(db);
-      const [prefs, savedProfile, measurement, count] = await Promise.all([
-        getPreferences(db), getUserProfile(db), latestBodyMeasurement(db), countExercises(db)
+      const [prefs, savedProfile, measurement, count, sources] = await Promise.all([
+        getPreferences(db), getUserProfile(db), latestBodyMeasurement(db), countExercises(db), countExercisesBySource(db)
       ]);
       setThemeState(prefs.theme);
       setWeightUnitState(prefs.unit);
       setProfile(savedProfile);
       setLatestMeasurement(measurement);
       setCatalogCount(count);
+      setCatalogSources(sources);
       await Promise.all([refreshDashboard(), refreshProgress(), refreshActive()]);
       setReady(true);
       checkUpdates().then((info) => {
         if (info) handleStartupUpdate(info).catch(() => {});
       }).catch(() => {});
-      if (count < 500) syncCatalogFromGithub(db).then(setCatalogCount).catch(() => {});
+      if (count < 500) syncCatalogFromGithub(db).then(async () => { const c = await countExercisesBySource(db); setCatalogCount(c.total); setCatalogSources(c); }).catch(() => {});
+
+      // Wger é uma fonte pública opcional. A atualização acontece em segundo plano
+      // no máximo uma vez a cada 7 dias, sem bloquear a abertura do app.
+      getSetting(db, WGER_SYNC_SETTING, '').then(lastSync => {
+        if (!shouldRefreshWger(lastSync)) return;
+        syncWgerCatalog(db).then(async result => {
+          await setSetting(db, WGER_SYNC_SETTING, new Date().toISOString());
+          setCatalogCount(result.total);
+          setCatalogSources({ free: result.free, wger: result.wger, hybrid: result.hybrid, total: result.total });
+        }).catch(() => {});
+      }).catch(() => {});
     })().catch(console.error);
   }, [db, refreshActive, refreshDashboard, refreshProgress, checkUpdates, handleStartupUpdate]);
 
@@ -257,7 +284,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await Promise.all([refreshDashboard(), refreshProgress(), refreshActive()]);
   }, [db, weightUnit, refreshDashboard, refreshProgress, refreshActive]);
 
-  const findExercises = useCallback((query = '', muscle = 'all', limit = 80) => searchExercises(db, query, muscle, limit), [db]);
+  const findExercises = useCallback((query = '', muscle = 'all', limit = 80, source: 'all' | ExerciseSource = 'all') => searchExercises(db, query, muscle, limit, source), [db]);
   const findExercise = useCallback((id: string) => getExercise(db, id), [db]);
   const favorite = useCallback((id: string) => isFavorite(db, id), [db]);
   const toggleFavorite = useCallback(async (id: string) => {
@@ -268,11 +295,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const syncCatalog = useCallback(async () => {
     setSyncingCatalog(true);
     try {
-      const count = await syncCatalogFromGithub(db);
-      setCatalogCount(count);
-      return count;
+      await syncCatalogFromGithub(db);
+      const counts = await countExercisesBySource(db);
+      setCatalogCount(counts.total);
+      setCatalogSources(counts);
+      return counts.total;
     } finally {
       setSyncingCatalog(false);
+    }
+  }, [db]);
+
+  const syncWger = useCallback(async () => {
+    setSyncingWger(true);
+    try {
+      const result = await syncWgerCatalog(db);
+      await setSetting(db, WGER_SYNC_SETTING, new Date().toISOString());
+      setCatalogCount(result.total);
+      setCatalogSources({ free: result.free, wger: result.wger, hybrid: result.hybrid, total: result.total });
+      return result;
+    } finally {
+      setSyncingWger(false);
     }
   }, [db]);
 
@@ -352,18 +394,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getWorkoutHistory = useCallback((limit = 20) => workoutHistoryDetailed(db, limit), [db]);
 
   const value = useMemo<AppContextValue>(() => ({
-    colors, isDark, themeMode, weightUnit, ready, catalogCount, syncingCatalog,
+    colors, isDark, themeMode, weightUnit, ready, catalogCount, catalogSources, syncingCatalog, syncingWger,
     dashboard, recent, muscles, profile, latestMeasurement: latestMeasurementState,
     activeWorkoutId, activeWorkoutName, activeExercises,
     setThemeMode, setWeightUnit, findExercises, findExercise, favorite, toggleFavorite,
-    syncCatalog, startWorkout, startPlannedWorkout, addExercise, addSet, updateSet, setEffort, getLoadSuggestion,
+    syncCatalog, syncWger, startWorkout, startPlannedWorkout, addExercise, addSet, updateSet, setEffort, getLoadSuggestion,
     removeExercise, finishWorkout, refreshActive, refreshProgress, getMuscleHistory, getExerciseHistory,
     getBodyHistory, refreshDashboard, saveProfile, recordMeasurement, getMeasurements, getWorkoutHistory,
     releaseInfo, checkingUpdate, downloadingUpdate, downloadedUpdateUri, checkUpdates, downloadUpdate, installUpdate
   }), [
-    colors, isDark, themeMode, weightUnit, ready, catalogCount, syncingCatalog, dashboard, recent, muscles,
+    colors, isDark, themeMode, weightUnit, ready, catalogCount, catalogSources, syncingCatalog, syncingWger, dashboard, recent, muscles,
     profile, latestMeasurementState, activeWorkoutId, activeWorkoutName, activeExercises, setThemeMode, setWeightUnit,
-    findExercises, findExercise, favorite, toggleFavorite, syncCatalog, startWorkout, startPlannedWorkout,
+    findExercises, findExercise, favorite, toggleFavorite, syncCatalog, syncWger, startWorkout, startPlannedWorkout,
     addExercise, addSet, updateSet, setEffort, getLoadSuggestion, removeExercise, finishWorkout, refreshActive,
     refreshProgress, getMuscleHistory, getExerciseHistory, getBodyHistory, refreshDashboard, saveProfile,
     recordMeasurement, getMeasurements, getWorkoutHistory, releaseInfo, checkingUpdate, downloadingUpdate,

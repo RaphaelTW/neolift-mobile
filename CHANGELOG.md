@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.5.0] - 2026-08-10
+
+### Added
+- Integração do catálogo público Wger sem conta/API key para leitura.
+- Sincronização híbrida Wger + free-exercise-db com deduplicação por nome.
+- Suporte a imagens, vídeos, fonte, autor e licença por exercício/mídia.
+- Player de vídeo interno com `expo-video` e cache quando suportado.
+- Filtro de catálogo por fonte e contadores de exercícios offline/Wger/híbridos.
+- Documentação `docs/WGER_INTEGRATION.md`.
+
+### Changed
+- “Como fazer” prioriza vídeo Wger interno quando disponível e mantém 3D offline como fallback.
+- Schema SQLite migra automaticamente o catálogo para suportar múltiplas fontes e mídias.
+- “Verificar agora” baixa imediatamente o APK estável mais recente disponível no Android.
+- Downloads de atualização usam cache isolado por versão e publicação atômica do arquivo concluído.
+
+### Security / Build
+- `image-size` usa o fork corrigido e empacotado do projeto; `uuid` fica fixado em `11.1.1`.
+- Instalações limpas validam a resolução do Metro antes das fases nativas do EAS.
+- CI usa `npm ci`, auditoria de segurança, TypeScript e verificações de release reproduzíveis.
+
 Todas as mudanças relevantes do NeoLift serão registradas aqui.
 
 ## [1.4.0] - 2026-08-10

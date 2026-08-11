@@ -2,7 +2,7 @@
   "expo": {
     "name": "NeoLift",
     "slug": "neolift-mobile",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "neolift",
@@ -10,11 +10,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.raphaeltw.neolift",
-      "buildNumber": "5"
+      "buildNumber": "6"
     },
     "android": {
       "package": "com.raphaeltw.neolift",
-      "versionCode": 5,
+      "versionCode": 6,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B0A0D"

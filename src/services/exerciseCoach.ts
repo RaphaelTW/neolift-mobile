@@ -74,6 +74,21 @@ export function videoSearchUrl(exercise: Exercise) {
   return `https://www.youtube.com/results?search_query=${query}`;
 }
 
+export function preferredExerciseVideo(exercise: Exercise) {
+  const direct = exercise.videos?.find(Boolean);
+  if (direct) return direct;
+  return exercise.media?.find(item => item.type === 'video' && !!item.url)?.url ?? null;
+}
+
+export function exerciseImageGallery(exercise: Exercise) {
+  return [...(exercise.images ?? []), ...(exercise.media ?? []).filter(item => item.type === 'image').map(item => item.url)]
+    .filter((url, index, all) => Boolean(url) && all.indexOf(url) === index);
+}
+
+export function isAnimatedExerciseImage(url: string) {
+  return /\.(gif|apng)(?:$|[?#])/i.test(url);
+}
+
 export async function openExerciseVideo(exercise: Exercise, onOffline3D?: () => void) {
   const state = await NetInfo.fetch();
   if (!state.isConnected || state.isInternetReachable === false) {
@@ -96,14 +111,22 @@ export async function openExerciseVideo(exercise: Exercise, onOffline3D?: () => 
   return true;
 }
 
-export function chooseExerciseDemo(exercise: Exercise, on3D: () => void) {
+export function chooseExerciseDemo(exercise: Exercise, on3D: () => void, onVideo?: () => void) {
+  const directVideo = preferredExerciseVideo(exercise);
+  const videoText = directVideo
+    ? 'Há um vídeo do catálogo Wger disponível para reprodução dentro do NeoLift.'
+    : 'Não há vídeo Wger para este item; o NeoLift pode procurar exemplos online.';
   showNeoDialog({
     title: 'Como quer ver o exercício?',
-    message: `${exercise.name}\n\nO 3D funciona offline. O vídeo usa a internet e abre exemplos de execução para você comparar o movimento.`,
+    message: `${exercise.name}\n\nO 3D funciona offline. ${videoText}`,
     icon: 'body-outline',
     actions: [
       { label: 'Ver exemplo em 3D', style: 'accent', onPress: on3D },
-      { label: 'Ver exemplo em vídeo', onPress: async () => {
+      { label: directVideo ? 'Assistir vídeo' : 'Procurar vídeo', onPress: async () => {
+        if (directVideo && onVideo) {
+          onVideo();
+          return;
+        }
         await openExerciseVideo(exercise, on3D);
       } },
       { label: 'Agora não', style: 'cancel' }

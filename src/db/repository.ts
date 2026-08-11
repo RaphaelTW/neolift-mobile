@@ -1,5 +1,9 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import type { ActiveExercise, BodyMeasurement, BodyMeasurementInput, EffortRating, Exercise, LoadSuggestion, MuscleProgress, ProgressPoint, ThemeMode, UserProfile, WeightUnit } from '@/types';
+import type { ActiveExercise, BodyMeasurement, BodyMeasurementInput, EffortRating, Exercise, ExerciseSource, LoadSuggestion, MuscleProgress, ProgressPoint, ThemeMode, UserProfile, WeightUnit } from '@/types';
+
+const jsonArray = <T = any>(value: any): T[] => {
+  try { return Array.isArray(value) ? value : JSON.parse(value || '[]'); } catch { return []; }
+};
 
 const parseExerciseRow = (row: any): Exercise => ({
   id: row.id,
@@ -8,11 +12,19 @@ const parseExerciseRow = (row: any): Exercise => ({
   level: row.level,
   mechanic: row.mechanic,
   equipment: row.equipment,
-  primaryMuscles: JSON.parse(row.primary_muscles || '[]'),
-  secondaryMuscles: JSON.parse(row.secondary_muscles || '[]'),
-  instructions: JSON.parse(row.instructions || '[]'),
+  primaryMuscles: jsonArray<string>(row.primary_muscles),
+  secondaryMuscles: jsonArray<string>(row.secondary_muscles),
+  instructions: jsonArray<string>(row.instructions),
   category: row.category,
-  images: JSON.parse(row.images || '[]')
+  images: jsonArray<string>(row.images),
+  videos: jsonArray<string>(row.videos),
+  source: (row.source || 'free-exercise-db') as ExerciseSource,
+  sourceId: row.source_id ?? null,
+  sourceUrl: row.source_url ?? null,
+  license: row.license ?? null,
+  licenseUrl: row.license_url ?? null,
+  licenseAuthor: row.license_author ?? null,
+  media: jsonArray(row.media)
 });
 
 export async function upsertExercises(db: SQLiteDatabase, exercises: Exercise[]) {
@@ -21,16 +33,21 @@ export async function upsertExercises(db: SQLiteDatabase, exercises: Exercise[])
     for (const e of exercises) {
       await db.runAsync(
         `INSERT INTO exercise_catalog
-          (id,name,force,level,mechanic,equipment,primary_muscles,secondary_muscles,instructions,category,images,synced_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+          (id,name,force,level,mechanic,equipment,primary_muscles,secondary_muscles,instructions,category,images,videos,source,source_id,source_url,license,license_url,license_author,media,synced_at)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
          ON CONFLICT(id) DO UPDATE SET
           name=excluded.name, force=excluded.force, level=excluded.level, mechanic=excluded.mechanic,
           equipment=excluded.equipment, primary_muscles=excluded.primary_muscles,
           secondary_muscles=excluded.secondary_muscles, instructions=excluded.instructions,
-          category=excluded.category, images=excluded.images, synced_at=excluded.synced_at`,
+          category=excluded.category, images=excluded.images, videos=excluded.videos,
+          source=excluded.source, source_id=excluded.source_id, source_url=excluded.source_url,
+          license=excluded.license, license_url=excluded.license_url, license_author=excluded.license_author,
+          media=excluded.media, synced_at=excluded.synced_at`,
         e.id, e.name, e.force, e.level, e.mechanic, e.equipment,
         JSON.stringify(e.primaryMuscles), JSON.stringify(e.secondaryMuscles),
-        JSON.stringify(e.instructions), e.category, JSON.stringify(e.images), now
+        JSON.stringify(e.instructions), e.category, JSON.stringify(e.images), JSON.stringify(e.videos ?? []),
+        e.source ?? 'free-exercise-db', e.sourceId ?? null, e.sourceUrl ?? null,
+        e.license ?? null, e.licenseUrl ?? null, e.licenseAuthor ?? null, JSON.stringify(e.media ?? []), now
       );
     }
   });
@@ -41,14 +58,33 @@ export async function countExercises(db: SQLiteDatabase) {
   return row?.count ?? 0;
 }
 
-export async function searchExercises(db: SQLiteDatabase, query = '', muscle = 'all', limit = 80) {
+export async function countExercisesBySource(db: SQLiteDatabase) {
+  const rows = await db.getAllAsync<{ source: string; count: number }>('SELECT source, COUNT(*) count FROM exercise_catalog GROUP BY source');
+  const out = { free: 0, wger: 0, hybrid: 0, total: 0 };
+  for (const row of rows) {
+    const count = Number(row.count || 0);
+    out.total += count;
+    if (row.source === 'wger') out.wger += count;
+    else if (row.source === 'hybrid') out.hybrid += count;
+    else out.free += count;
+  }
+  return out;
+}
+
+export async function allExercises(db: SQLiteDatabase): Promise<Exercise[]> {
+  const rows = await db.getAllAsync<any>('SELECT * FROM exercise_catalog ORDER BY name ASC');
+  return rows.map(parseExerciseRow);
+}
+
+export async function searchExercises(db: SQLiteDatabase, query = '', muscle = 'all', limit = 80, source: 'all' | ExerciseSource = 'all') {
   const q = `%${query.trim()}%`;
   const rows = await db.getAllAsync<any>(
     `SELECT * FROM exercise_catalog
      WHERE (? = '' OR name LIKE ? OR equipment LIKE ?)
        AND (? = 'all' OR primary_muscles LIKE ?)
+       AND (? = 'all' OR source = ? OR (? = 'wger' AND source = 'hybrid') OR (? = 'free-exercise-db' AND source = 'hybrid'))
      ORDER BY name ASC LIMIT ?`,
-    query.trim(), q, q, muscle, `%\"${muscle}\"%`, limit
+    query.trim(), q, q, muscle, `%\"${muscle}\"%`, source, source, source, source, limit
   );
   return rows.map(parseExerciseRow);
 }

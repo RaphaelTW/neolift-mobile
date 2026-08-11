@@ -47,7 +47,7 @@ A animação 3D é uma referência biomecânica, não uma reprodução milimétr
 
 ## Vídeos
 
-O serviço `openExerciseVideo()` usa `@react-native-community/netinfo` para verificar conectividade e `expo-web-browser` para abrir a busca online. Nenhuma API key é necessária.
+Na v1.5.0, quando o catálogo Wger fornece uma URL de vídeo, a rota `/exercise/video/[id]` reproduz a mídia dentro do NeoLift com `expo-video` e cache quando suportado. `@react-native-community/netinfo` verifica conectividade. `openExerciseVideo()` e `expo-web-browser` permanecem apenas como fallback de busca para exercícios sem vídeo Wger.
 
 ## Alertas
 

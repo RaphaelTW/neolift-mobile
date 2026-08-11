@@ -1,28 +1,44 @@
-# Pesquisa de APIs de treino — v1.1.0
+# Pesquisa de APIs de exercícios — atualização v1.5.0
 
-Pesquisa realizada em 07/08/2026 no repositório `public-apis/public-apis`.
+## Requisito do NeoLift
 
-## Critérios
+A fonte secundária deveria permitir leitura de exercícios sem exigir que cada usuário crie conta ou informe uma API key. O app também precisa continuar utilizável offline.
 
-- gratuita;
-- sem API key, OAuth ou cadastro obrigatório;
-- adequada a exercícios de musculação/treino;
-- utilizável como fonte complementar sem substituir o banco local do usuário.
+## Wger — selecionado
 
-## Resultado
+A documentação oficial atual do Wger informa que **endpoints públicos, como a lista de exercícios, podem ser acessados sem autenticação**. Autenticação fica necessária para objetos pertencentes ao usuário, como rotinas pessoais.
 
-Na seção **Sports & Fitness**, a opção diretamente relacionada a treino/exercícios é **Wger** (`Workout manager data as exercises, muscles or equipment`). O próprio catálogo `public-apis` marca a autenticação como `apiKey`, portanto ela não atende ao requisito de operação sem chave.
+Por isso a v1.5.0 passa a consultar o endpoint público `/api/v2/exerciseinfo/` e não cria conta Wger, não pede API key e não envia perfil/histórico do NeoLift para a API.
 
-As opções da mesma seção marcadas como `No` em Auth são majoritariamente placares, automobilismo, bicicletas, locais esportivos, ligas e resultados. Elas não fornecem um catálogo equivalente de musculação.
+O Wger também possui suporte a imagens e vídeos de exercícios. Nem toda entrada possui mídia; o NeoLift usa seu Exercise Coach 3D como fallback.
 
-## Decisão do NeoLift
+### Licenciamento
 
-A v1.1.0 mantém o `yuhonas/free-exercise-db` como fonte do catálogo porque:
+O software Wger é AGPL-3.0-or-later. A documentação oficial identifica o conteúdo inicial de exercícios como CC-BY-SA 3.0 e algumas mídias/entradas podem conter metadados próprios de autoria/licença.
 
-1. não exige API key;
-2. pode ser empacotado no aplicativo;
-3. funciona offline;
-4. o histórico do usuário continua 100% local;
-5. evita transformar disponibilidade de uma API externa em ponto único de falha.
+A integração do NeoLift preserva esses metadados para atribuição e não incorpora o código-fonte do Wger.
 
-A arquitetura de `src/services/` continua separada para permitir adicionar um provedor externo futuramente sem migrar o banco de treinos.
+## free-exercise-db — continua como base principal
+
+O `yuhonas/free-exercise-db` continua sendo a base empacotada/offline por ser um dataset público sob Unlicense/Public Domain e já conter centenas de exercícios, instruções e imagens.
+
+## Arquitetura escolhida
+
+```text
+free-exercise-db ──> catálogo offline
+                         │
+                         ├── equivalência pelo nome ──> exercício híbrido
+                         │                               + mídia Wger
+Wger público ────────────┤
+                         └── exercício novo ──────────> wger:<id>
+
+Vídeo Wger disponível? ──> player interno expo-video
+Sem vídeo / offline? ────> Exercise Coach 3D
+```
+
+## Fontes verificadas em 10/08/2026
+
+- Documentação da API Wger: `https://wger.readthedocs.io/`
+- Repositório oficial Wger: `https://github.com/wger-project/wger`
+- free-exercise-db: `https://github.com/yuhonas/free-exercise-db`
+- Expo Video: `https://docs.expo.dev/versions/latest/sdk/video/`
