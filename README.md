@@ -60,19 +60,21 @@ A v1.5.0 mantém a identidade roxa, o tema claro e o preto fosco, preserva o **E
 
 ## Exercise Coach 3D
 
-Ao tocar em **Como fazer**, o NeoLift pergunta se o usuário quer **ver em 3D** ou **ver em vídeo**.
+Ao tocar em **Como fazer**, o NeoLift oferece vídeo interno quando houver mídia oficial Wger. Sem vídeo interno, abre diretamente a opção 3D.
 
 ```text
 Como quer ver o exercício?
 
-[ Ver exemplo em 3D ]
-[ Ver exemplo em vídeo ]
+[ Assistir vídeo interno ]  // quando disponível
+[ Ver animação 3D ]
 [ Agora não ]
 ```
 
 O 3D é renderizado no aparelho e funciona offline. Em vez de empacotar centenas de arquivos pesados, um avatar procedural é animado por famílias biomecânicas, cobrindo todo o catálogo inclusive exercícios adicionados no futuro por meio de um fallback genérico.
 
-Quando a sincronização Wger encontra um vídeo para o exercício, ele é reproduzido **dentro do NeoLift** com `expo-video`. Se não houver mídia Wger, o botão oferece uma busca online como fallback. Sem internet, o NeoLift mantém a demonstração 3D e as instruções locais.
+Quando a sincronização Wger encontra um vídeo oficial para o exercício, ele é reproduzido **dentro do NeoLift** com `expo-video`. Não há busca no YouTube nem abertura de navegador. Sem vídeo ou internet, o NeoLift mantém a demonstração 3D, as instruções e uma imagem local de fallback.
+
+Todo exercício possui representação visual: imagens específicas dos catálogos têm prioridade e o asset local otimizado `assets/exercise-fallback.webp` cobre mídia ausente ou falha de carregamento, inclusive durante a sessão ativa.
 
 Detalhes em [`docs/EXERCISE_COACH.md`](docs/EXERCISE_COACH.md) e a validação de cobertura em [`docs/COACH_COVERAGE.md`](docs/COACH_COVERAGE.md).
 

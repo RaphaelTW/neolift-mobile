@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.6.0] - 2026-08-10
+
+### Added
+- Imagem local de fallback para exercícios sem mídia própria ou com falha de rede.
+- Miniatura do exercício no plano semanal e dentro de cada bloco da sessão ativa.
+- Componente centralizado `ExerciseImage` para catálogo, detalhes, galeria e treino.
+
+### Changed
+- Vídeos agora são aceitos somente da mídia oficial Wger e sempre reproduzidos dentro do NeoLift.
+- Exercícios sem vídeo interno oferecem diretamente o Exercise Coach 3D, sem busca externa.
+- Falhas de imagem remota passam automaticamente para o asset local do NeoLift.
+
+### Removed
+- Busca contextual no YouTube e abertura de navegador para demonstrações.
+- Dependência `expo-web-browser`, que deixou de ser necessária.
+
 ## [1.5.0] - 2026-08-10
 
 ### Added

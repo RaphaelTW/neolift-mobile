@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
@@ -8,10 +7,10 @@ import { Button, Card, Chip, Eyebrow, SectionTitle, Text } from '@/components/Ui
 import { ProgressChart } from '@/components/ProgressChart';
 import { useApp } from '@/context/AppProvider';
 import type { Exercise, ProgressPoint } from '@/types';
-import { exerciseImageUrl } from '@/services/exerciseCatalog';
 import { muscleLabel } from '@/utils/muscles';
-import { exerciseImageGallery, isAnimatedExerciseImage, openExerciseVideo, preferredExerciseVideo } from '@/services/exerciseCoach';
+import { exerciseImageGallery, isAnimatedExerciseImage, preferredExerciseVideo } from '@/services/exerciseCoach';
 import { showNeoDialog } from '@/services/dialog';
+import { ExerciseImage } from '@/components/ExerciseImage';
 
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,22 +22,21 @@ export default function ExerciseDetailScreen() {
   useEffect(() => { if (!id) return; Promise.all([findExercise(id), favorite(id), getExerciseHistory(id)]).then(([e,f,h]) => { setExercise(e); setFav(f); setHistory(h); setSelectedImage(e ? exerciseImageGallery(e)[0] ?? null : null); }); }, [id, findExercise, favorite, getExerciseHistory]);
   if (!exercise) return <Screen><Text>Carregando exercício...</Text></Screen>;
   const gallery = exerciseImageGallery(exercise);
-  const image = exerciseImageUrl(selectedImage ?? gallery[0]);
   const video = preferredExerciseVideo(exercise);
   const add = async () => { await addExercise(exercise); showNeoDialog({ title: 'Adicionado ao treino', message: `${exercise.name} entrou no treino atual.`, icon: 'checkmark-circle-outline', actions: [{ label: 'Continuar', style: 'cancel' }, { label: 'Abrir treino', style: 'accent', onPress: () => router.push('/workout/session') }] }); };
   return <Screen>
     <View style={styles.top}><Pressable onPress={() => router.back()} style={[styles.iconButton,{ backgroundColor: colors.surface }]}><Ionicons name="arrow-back" size={22} color={colors.text} /></Pressable><Pressable onPress={async () => setFav(await toggleFavorite(exercise.id))} style={[styles.iconButton,{ backgroundColor: colors.surface }]}><Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={fav ? colors.danger : colors.text} /></Pressable></View>
     <View>
-      <Image source={image ? { uri: image } : undefined} style={[styles.hero, { backgroundColor: colors.surfaceAlt }]} contentFit="contain" cachePolicy="disk" transition={180} autoplay accessibilityLabel={`Demonstração visual de ${exercise.name}`} />
+      <ExerciseImage exercise={exercise} path={selectedImage ?? gallery[0]} style={[styles.hero, { backgroundColor: colors.surfaceAlt }]} contentFit="contain" />
       {selectedImage && isAnimatedExerciseImage(selectedImage) ? <View style={[styles.mediaBadge, { backgroundColor: colors.accent }]}><Text style={styles.mediaBadgeText}>GIF ANIMADO</Text></View> : null}
     </View>
-    {gallery.length > 1 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery}>{gallery.map((item, index) => { const uri = exerciseImageUrl(item); const active = item === (selectedImage ?? gallery[0]); return <Pressable key={`${item}-${index}`} onPress={() => setSelectedImage(item)} style={[styles.thumbWrap, { borderColor: active ? colors.accent : colors.border }]}><Image source={uri ? { uri } : undefined} style={styles.thumb} contentFit="cover" cachePolicy="disk" autoplay accessibilityLabel={`Imagem ${index + 1} de ${exercise.name}`} /></Pressable>; })}</ScrollView> : null}
+    {gallery.length > 1 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery}>{gallery.map((item, index) => { const active = item === (selectedImage ?? gallery[0]); return <Pressable key={`${item}-${index}`} onPress={() => setSelectedImage(item)} style={[styles.thumbWrap, { borderColor: active ? colors.accent : colors.border }]}><ExerciseImage exercise={exercise} path={item} style={styles.thumb} compact /></Pressable>; })}</ScrollView> : null}
     <Eyebrow>{exercise.category} // {exercise.level || 'all levels'}</Eyebrow><Text style={styles.title}>{exercise.name}</Text>
     <View style={styles.chips}><Chip label={muscleLabel(exercise.primaryMuscles[0] || 'geral')} selected /><Chip label={exercise.equipment || 'sem equipamento'} /><Chip label={exercise.mechanic || 'livre'} /></View>
     <SectionTitle title="Como fazer" />
     <View style={{ gap: 9 }}>
-      {video ? <Button title="Assistir vídeo do Wger" onPress={() => router.push(`/exercise/video/${exercise.id}`)} /> : <Button title="Procurar demonstração em vídeo" onPress={() => openExerciseVideo(exercise, () => router.push(`/exercise/coach/${exercise.id}`))} />}
-      <Button title="Ver animação 3D" onPress={() => router.push(`/exercise/coach/${exercise.id}`)} kind="secondary" />
+      {video ? <Button title="Assistir vídeo interno" onPress={() => router.push(`/exercise/video/${exercise.id}`)} /> : null}
+      <Button title="Ver animação 3D" onPress={() => router.push(`/exercise/coach/${exercise.id}`)} kind={video ? 'secondary' : undefined} />
       <Button title="Adicionar ao treino" onPress={add} kind="secondary" />
     </View>
     <SectionTitle title="Sua evolução" /><Card><View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}><Text style={{ fontWeight: '900' }}>Maior carga</Text><Text style={{ color: colors.muted, fontSize: 12 }}>{weightUnit}</Text></View><ProgressChart points={history} height={190} /></Card>

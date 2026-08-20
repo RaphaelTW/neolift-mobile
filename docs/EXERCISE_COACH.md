@@ -1,12 +1,12 @@
-# Exercise Coach — 3D offline + vídeo online
+# Exercise Coach — 3D offline + vídeo interno
 
 ## Fluxo
 
 1. O usuário toca em **Como fazer**.
 2. O NeoLift mostra um diálogo com a mesma identidade visual do app.
-3. O usuário escolhe **Ver exemplo em 3D** ou **Ver exemplo em vídeo**.
+3. Se houver mídia oficial Wger, o usuário escolhe **Assistir vídeo interno** ou **Ver animação 3D**.
 4. O 3D funciona sem internet.
-5. O vídeo exige internet; offline, o NeoLift oferece retornar ao 3D.
+5. O vídeo remoto exige internet, mas é reproduzido somente dentro do NeoLift; offline, o app oferece o 3D.
 
 ## Cobertura 3D
 
@@ -47,7 +47,11 @@ A animação 3D é uma referência biomecânica, não uma reprodução milimétr
 
 ## Vídeos
 
-Na v1.5.0, quando o catálogo Wger fornece uma URL de vídeo, a rota `/exercise/video/[id]` reproduz a mídia dentro do NeoLift com `expo-video` e cache quando suportado. `@react-native-community/netinfo` verifica conectividade. `openExerciseVideo()` e `expo-web-browser` permanecem apenas como fallback de busca para exercícios sem vídeo Wger.
+Desde a v1.6.0, a rota `/exercise/video/[id]` reproduz somente URLs oficiais de mídia Wger dentro do NeoLift com `expo-video` e cache quando suportado. `@react-native-community/netinfo` verifica conectividade. Exercícios sem vídeo interno usam o Coach 3D; não existe busca externa ou abertura de navegador.
+
+## Imagens
+
+`ExerciseImage` prioriza a imagem específica do exercício e troca automaticamente para `assets/exercise-fallback.webp` quando não houver mídia ou ocorrer falha de carregamento. A mesma regra vale no catálogo, no plano semanal, nos detalhes e na sessão ativa.
 
 ## Alertas
 

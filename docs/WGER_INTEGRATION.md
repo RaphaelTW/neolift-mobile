@@ -25,11 +25,11 @@ Fluxo:
 
 ## Mídia
 
-Quando o exercício possui vídeo Wger, a tela oferece **Assistir vídeo do Wger** e reproduz o arquivo dentro do NeoLift com `expo-video`. O player usa cache quando a plataforma permitir. Como alguns vídeos públicos podem usar MOV/HEVC, uma falha de codec é tratada e direciona o usuário para o Coach 3D ou para outra demonstração online.
+Quando o exercício possui vídeo Wger, a tela oferece **Assistir vídeo interno** e reproduz o arquivo dentro do NeoLift com `expo-video`. O player aceita somente o diretório oficial de mídia Wger, usa cache quando a plataforma permitir e nunca abre busca, navegador ou aplicativo externo. Como alguns vídeos públicos podem usar MOV/HEVC, uma falha de codec direciona o usuário para o Coach 3D.
 
 As imagens disponíveis são exibidas em uma galeria. O `expo-image` reproduz automaticamente GIF, APNG ou WebP animado quando alguma fonte compatível fornecer esse formato. O catálogo Wger observado atualmente é formado principalmente por imagens estáticas, portanto o app não apresenta imagens estáticas como se fossem GIFs.
 
-Se o exercício não possui vídeo ou estiver offline sem o arquivo em cache, o NeoLift mantém o **Exercise Coach 3D** como alternativa para todos os exercícios.
+Se o exercício não possui vídeo ou estiver offline sem o arquivo em cache, o NeoLift mantém o **Exercise Coach 3D** como alternativa para todos os exercícios. Quando uma imagem específica não existe ou falha, `assets/exercise-fallback.webp` garante uma representação local.
 
 As imagens Wger também podem complementar exercícios que já existiam na base offline.
 
@@ -56,9 +56,10 @@ A sincronização Wger baixa apenas catálogo público. Perfil, sexo, idade, pes
 
 A ordem de disponibilidade visual é:
 
-1. vídeo Wger, quando existe e está acessível;
+1. vídeo Wger no player interno, quando existe e está acessível;
 2. imagens da biblioteca;
-3. demonstração 3D offline do NeoLift;
-4. instruções textuais.
+3. imagem local de fallback do NeoLift;
+4. demonstração 3D offline do NeoLift;
+5. instruções textuais.
 
 Assim, uma indisponibilidade do Wger não impede o uso do app ou dos treinos já salvos.

@@ -17,16 +17,16 @@ Treinos sem `finished_at` são considerados ativos e podem ser retomados após f
 ### Progresso
 As consultas consideram somente séries `completed=1` dentro de treinos finalizados. O histórico por exercício e por músculo usa a maior carga registrada por dia.
 
-## Exercise Coach v1.4.0
+## Exercise Coach e mídia interna
 
 ```text
 Exercise detail / Active session
           ↓
      chooseExerciseDemo
        ↙          ↘
-  3D offline     vídeo online
+  3D offline     vídeo interno
       ↓               ↓
-Exercise3D       NetInfo → WebBrowser
+Exercise3D       expo-video → Wger
       ↓
 coachProfile(exercise)
       ↓
@@ -34,6 +34,8 @@ família biomecânica → avatar procedural
 ```
 
 O 3D utiliza `@react-three/fiber/native` sobre `expo-gl`. O catálogo não precisa armazenar um modelo 3D por exercício: `coachProfile()` resolve uma família de movimento e o `BodyRig` anima o mesmo avatar procedural.
+
+Vídeos são reproduzidos somente na rota interna `/exercise/video/[id]`. `preferredExerciseVideo()` rejeita URLs fora do diretório oficial de mídia de exercícios Wger. `ExerciseImage` garante imagem local quando uma mídia específica não existir ou não carregar.
 
 ## Diálogos
 

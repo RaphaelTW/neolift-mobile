@@ -7,7 +7,7 @@ import { Button, Card, Eyebrow, SectionTitle, Text } from '@/components/Ui';
 import { Exercise3D } from '@/components/Exercise3D';
 import { useApp } from '@/context/AppProvider';
 import type { Exercise } from '@/types';
-import { coachProfile, openExerciseVideo, preferredExerciseVideo } from '@/services/exerciseCoach';
+import { coachProfile, preferredExerciseVideo } from '@/services/exerciseCoach';
 import { muscleLabel } from '@/utils/muscles';
 
 export default function ExerciseCoachScreen() {
@@ -31,7 +31,7 @@ export default function ExerciseCoachScreen() {
       <View style={styles.muscles}><Text style={{ color: colors.accent, fontWeight: '900', fontSize: 11 }}>{muscleLabel(exercise.primaryMuscles[0] || 'geral').toUpperCase()}</Text>{exercise.secondaryMuscles.slice(0, 3).map(m => <Text key={m} style={{ color: colors.muted, fontSize: 11 }}>• {muscleLabel(m)}</Text>)}</View>
     </Card>
 
-    <Button title={preferredExerciseVideo(exercise) ? 'Assistir vídeo Wger' : 'Procurar exemplo em vídeo'} onPress={() => preferredExerciseVideo(exercise) ? router.push(`/exercise/video/${exercise.id}`) : openExerciseVideo(exercise, () => {})} kind="secondary" />
+    {preferredExerciseVideo(exercise) ? <Button title="Assistir vídeo interno" onPress={() => router.push(`/exercise/video/${exercise.id}`)} kind="secondary" /> : null}
 
     <SectionTitle title="Passo a passo" />
     {exercise.instructions.map((step, index) => <Card key={`${exercise.id}-${index}`} style={styles.stepCard}><View style={[styles.step, { backgroundColor: colors.accentSoft }]}><Text style={{ color: colors.accent, fontWeight: '900' }}>{index + 1}</Text></View><Text style={{ flex: 1, color: colors.muted, lineHeight: 20 }}>{step}</Text></Card>)}

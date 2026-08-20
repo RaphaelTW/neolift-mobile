@@ -9,7 +9,7 @@ import { Screen } from '@/components/Screen';
 import { Button, Card, Eyebrow, SectionTitle, Text } from '@/components/Ui';
 import { useApp } from '@/context/AppProvider';
 import type { Exercise } from '@/types';
-import { openExerciseVideo, preferredExerciseVideo } from '@/services/exerciseCoach';
+import { preferredExerciseVideo } from '@/services/exerciseCoach';
 import { showNeoDialog } from '@/services/dialog';
 
 function Player({ uri, onError }: { uri: string; onError: (message: string) => void }) {
@@ -44,8 +44,8 @@ export default function ExerciseVideoScreen() {
   return <Screen>
     <View style={styles.top}><Pressable onPress={() => router.back()} style={[styles.iconButton,{ backgroundColor: colors.surface }]}><Ionicons name="arrow-back" size={22} color={colors.text} /></Pressable><Eyebrow>EXERCISE COACH // VÍDEO</Eyebrow></View>
     <Text style={styles.title}>{exercise.name}</Text>
-    {uri && online && !playerError ? <Card style={{ padding: 8 }}><Player uri={uri} onError={setPlayerError} /></Card> : <Card><Ionicons name="videocam-off-outline" size={38} color={colors.muted} /><Text style={{ fontWeight: '900', marginTop: 10 }}>Sem vídeo Wger reproduzível agora</Text><Text style={{ color: colors.muted, lineHeight: 19, marginTop: 5 }}>{playerError ? 'O formato deste vídeo não é compatível com o aparelho. ' : ''}Você pode usar o 3D offline ou procurar outra demonstração online.</Text></Card>}
-    <View style={{ gap: 8 }}><Button title="Ver em 3D" onPress={() => router.replace(`/exercise/coach/${exercise.id}`)} /><Button title="Procurar outro vídeo" onPress={() => openExerciseVideo(exercise, () => router.replace(`/exercise/coach/${exercise.id}`))} kind="secondary" /></View>
+    {uri && online && !playerError ? <Card style={{ padding: 8 }}><Player uri={uri} onError={setPlayerError} /></Card> : <Card><Ionicons name="videocam-off-outline" size={38} color={colors.muted} /><Text style={{ fontWeight: '900', marginTop: 10 }}>Vídeo interno indisponível</Text><Text style={{ color: colors.muted, lineHeight: 19, marginTop: 5 }}>{playerError ? 'O formato deste vídeo não é compatível com o aparelho. ' : ''}A demonstração 3D continua disponível sem abrir sites ou aplicativos externos.</Text></Card>}
+    <Button title="Ver animação 3D" onPress={() => router.replace(`/exercise/coach/${exercise.id}`)} />
     {uri ? <><SectionTitle title="Fonte da mídia" /><Card><Text style={{ fontWeight: '900' }}>Wger</Text><Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 5 }}>{videoMedia?.author ? `Autor: ${videoMedia.author}\n` : ''}{videoMedia?.license ? `Licença: ${videoMedia.license}` : exercise.license ? `Licença: ${exercise.license}` : 'Consulte os metadados da entrada Wger.'}</Text></Card></> : null}
     <SectionTitle title="Execução" />
     {exercise.instructions.slice(0, 8).map((step, i) => <Card key={i} style={{ flexDirection: 'row', gap: 10 }}><View style={[styles.step,{ backgroundColor: colors.accentSoft }]}><Text style={{ color: colors.accent, fontWeight: '900' }}>{i + 1}</Text></View><Text style={{ flex: 1, color: colors.muted, lineHeight: 20 }}>{step}</Text></Card>)}

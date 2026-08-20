@@ -1,5 +1,3 @@
-import NetInfo from '@react-native-community/netinfo';
-import * as WebBrowser from 'expo-web-browser';
 import type { Exercise } from '@/types';
 import { showNeoDialog } from '@/services/dialog';
 
@@ -69,15 +67,12 @@ export function coachProfile(exercise: Exercise): CoachProfile {
   return { family: 'generic', label: 'Movimento guiado', cue: 'Use a demonstração como referência visual e siga as instruções específicas abaixo.', camera: 'three-quarter' };
 }
 
-export function videoSearchUrl(exercise: Exercise) {
-  const query = encodeURIComponent(`${exercise.name} execução correta exercício academia`);
-  return `https://www.youtube.com/results?search_query=${query}`;
-}
+const trustedInternalVideo = (url: string) => /^https:\/\/(?:www\.)?wger\.de\/media\/exercise-video\//i.test(url);
 
 export function preferredExerciseVideo(exercise: Exercise) {
-  const direct = exercise.videos?.find(Boolean);
+  const direct = exercise.videos?.find(trustedInternalVideo);
   if (direct) return direct;
-  return exercise.media?.find(item => item.type === 'video' && !!item.url)?.url ?? null;
+  return exercise.media?.find(item => item.type === 'video' && trustedInternalVideo(item.url))?.url ?? null;
 }
 
 export function exerciseImageGallery(exercise: Exercise) {
@@ -89,47 +84,23 @@ export function isAnimatedExerciseImage(url: string) {
   return /\.(gif|apng)(?:$|[?#])/i.test(url);
 }
 
-export async function openExerciseVideo(exercise: Exercise, onOffline3D?: () => void) {
-  const state = await NetInfo.fetch();
-  if (!state.isConnected || state.isInternetReachable === false) {
-    showNeoDialog({
-      title: 'Você está offline',
-      message: 'O vídeo precisa de internet. A demonstração 3D continua disponível no aparelho.',
-      icon: 'cloud-offline-outline',
-      actions: [
-        { label: 'Cancelar', style: 'cancel' },
-        { label: 'Ver em 3D', style: 'accent', onPress: onOffline3D }
-      ]
-    });
-    return false;
-  }
-  await WebBrowser.openBrowserAsync(videoSearchUrl(exercise), {
-    presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-    controlsColor: '#9D5CFF',
-    toolbarColor: '#0B0A0D'
-  });
-  return true;
-}
-
 export function chooseExerciseDemo(exercise: Exercise, on3D: () => void, onVideo?: () => void) {
   const directVideo = preferredExerciseVideo(exercise);
-  const videoText = directVideo
-    ? 'Há um vídeo do catálogo Wger disponível para reprodução dentro do NeoLift.'
-    : 'Não há vídeo Wger para este item; o NeoLift pode procurar exemplos online.';
   showNeoDialog({
     title: 'Como quer ver o exercício?',
-    message: `${exercise.name}\n\nO 3D funciona offline. ${videoText}`,
+    message: directVideo
+      ? `${exercise.name}\n\nO vídeo é reproduzido dentro do NeoLift. A demonstração 3D também funciona offline.`
+      : `${exercise.name}\n\nNão há vídeo interno para este exercício. A demonstração 3D funciona offline.`,
     icon: 'body-outline',
-    actions: [
-      { label: 'Ver exemplo em 3D', style: 'accent', onPress: on3D },
-      { label: directVideo ? 'Assistir vídeo' : 'Procurar vídeo', onPress: async () => {
-        if (directVideo && onVideo) {
-          onVideo();
-          return;
-        }
-        await openExerciseVideo(exercise, on3D);
-      } },
-      { label: 'Agora não', style: 'cancel' }
-    ]
+    actions: directVideo && onVideo
+      ? [
+          { label: 'Assistir vídeo interno', style: 'accent', onPress: onVideo },
+          { label: 'Ver animação 3D', onPress: on3D },
+          { label: 'Agora não', style: 'cancel' }
+        ]
+      : [
+          { label: 'Ver animação 3D', style: 'accent', onPress: on3D },
+          { label: 'Agora não', style: 'cancel' }
+        ]
   });
 }
